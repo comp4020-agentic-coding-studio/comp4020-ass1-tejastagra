@@ -25,14 +25,22 @@ const startups = Array.from({ length: STARTUP_COUNT }, (_, i) => ({
     </header>
     <main>
       <h1>The power law allocator</h1>
+      <p class="framing">
+        Split a fixed <strong data-testid="fund-total">${FUND_TOTAL.toLocaleString("en-AU")}</strong>
+        fund across {STARTUP_COUNT} startups however you like. However you divide it, one outlier
+        decides almost all of the return.
+      </p>
 
-      <p data-testid="fund-total">Fund: ${FUND_TOTAL.toLocaleString("en-AU")}</p>
+      <div class="remaining-bar">
+        <p data-testid="fund-remaining" aria-live="polite" class="remaining-number">Remaining: $0</p>
+        <p class="allocation-prompt" aria-live="polite"></p>
+      </div>
 
       <form id="allocator-form">
-        <ul>
+        <ul class="startup-grid">
           {
             startups.map((startup) => (
-              <li>
+              <li class="startup-card">
                 <label for={`slider-${startup.id}`}>{startup.name}</label>
                 <input
                   type="range"
@@ -53,85 +61,80 @@ const startups = Array.from({ length: STARTUP_COUNT }, (_, i) => ({
           }
         </ul>
 
-        <p data-testid="fund-remaining" aria-live="polite">Remaining: $0</p>
-
-        <button type="submit" data-testid="allocate-submit">Allocate</button>
+        <button type="submit" data-testid="allocate-submit" class="allocate-button">Allocate</button>
       </form>
 
-      <p data-testid="fund-return" aria-live="polite"></p>
+      <section class="payoff">
+        <p data-testid="fund-return" class="payoff-number" aria-live="polite"></p>
+        <p class="payoff-compare"></p>
+      </section>
     </main>
 
     <footer>
-      <p data-testid="return-model-note">
-        Returns are a modelled Pareto approximation, not real fund or startup data. Parameters
-        are set so most outcomes land near or below 1x with a small chance of a 10x+ outlier,
-        broadly matching the aggregate pattern in Correlation Ventures' venture outcomes
-        analysis (around two-thirds of financings return below 1x; a small share return 10x
-        or more).
-      </p>
+      <details class="info-panel">
+        <summary>About this data</summary>
+        <p>
+          Returns are a modelled Pareto approximation, not real fund or startup data. Parameters
+          are set so most outcomes land near or below 1x with a small chance of a 10x+ outlier,
+          broadly matching the aggregate pattern in Correlation Ventures' venture outcomes
+          analysis (around two-thirds of financings return below 1x; a small share return 10x
+          or more).
+        </p>
+      </details>
     </footer>
 
     <script is:inline define:vars={{ FUND_TOTAL, STARTUP_COUNT }}>
       const sliders = Array.from(document.querySelectorAll('[data-testid="allocation-slider"]'));
       const outputs = sliders.map((slider) => document.getElementById(`value-${slider.id.split("-")[1]}`));
       const remainingEl = document.querySelector('[data-testid="fund-remaining"]');
+      const promptEl = document.querySelector(".allocation-prompt");
+      const submitButton = document.querySelector('[data-testid="allocate-submit"]');
       const returnEl = document.querySelector('[data-testid="fund-return"]');
+      const compareEl = document.querySelector(".payoff-compare");
       const form = document.getElementById("allocator-form");
 
       let allocations = sliders.map((slider) => Number(slider.value));
 
       const currency = (n) => `$${Math.round(n).toLocaleString("en-AU")}`;
 
-      // Rounds each allocation to a whole dollar while keeping the sum exactly
-      // equal to `total`, by handing the leftover cents to the largest fractional
-      // remainders first.
-      function largestRemainderRound(values, total) {
-        const floors = values.map(Math.floor);
-        const used = floors.reduce((a, b) => a + b, 0);
-        const remainder = total - used;
-        const order = values
-          .map((v, i) => ({ i, frac: v - Math.floor(v) }))
-          .sort((a, b) => b.frac - a.frac);
-        const result = [...floors];
-        for (let k = 0; k < remainder; k++) {
-          result[order[k % order.length].i] += 1;
-        }
-        return result;
+      function remaining() {
+        return FUND_TOTAL - allocations.reduce((sum, v) => sum + v, 0);
       }
 
+      // Each slider can only take what's left over the fund: its own headroom
+      // is its current value plus whatever hasn't been allocated elsewhere.
+      // The fund never grows, so submit stays locked until it's fully spent.
       function render() {
+        const left = remaining();
         allocations.forEach((value, i) => {
-          sliders[i].value = String(value);
+          const slider = sliders[i];
+          const cap = value + left;
+          slider.max = String(cap);
+          slider.value = String(value);
+          const pct = cap > 0 ? (value / cap) * 100 : 0;
+          slider.style.background = `linear-gradient(to right, var(--accent) ${pct}%, var(--track) ${pct}%)`;
           outputs[i].textContent = currency(value);
         });
-        const total = allocations.reduce((a, b) => a + b, 0);
-        remainingEl.textContent = `Remaining: ${currency(FUND_TOTAL - total)}`;
+
+        remainingEl.textContent = `Remaining: ${currency(left)}`;
+
+        const fullyAllocated = left === 0;
+        submitButton.disabled = !fullyAllocated;
+        promptEl.textContent = fullyAllocated
+          ? ""
+          : `Allocate the full ${currency(FUND_TOTAL)} to continue.`;
       }
 
-      // The fund is fixed: moving one slider takes the difference from every
-      // other startup, proportional to what they currently hold, so the total
-      // always equals the fund.
-      function redistribute(changedIndex, rawValue) {
-        const newValue = Math.max(0, Math.min(FUND_TOTAL, rawValue));
-        const othersTotalOld = FUND_TOTAL - allocations[changedIndex];
-        const othersTotalNew = FUND_TOTAL - newValue;
-
-        let scaled;
-        if (othersTotalOld <= 0) {
-          const share = othersTotalNew / (allocations.length - 1);
-          scaled = allocations.map((_, i) => (i === changedIndex ? 0 : share));
-        } else {
-          const scale = othersTotalNew / othersTotalOld;
-          scaled = allocations.map((v, i) => (i === changedIndex ? 0 : v * scale));
-        }
-        scaled[changedIndex] = newValue;
-
-        allocations = largestRemainderRound(scaled, FUND_TOTAL);
+      function onSliderInput(index, slider) {
+        const left = remaining();
+        const cap = allocations[index] + left;
+        const value = Math.max(0, Math.min(cap, Number(slider.value)));
+        allocations[index] = value;
         render();
       }
 
       sliders.forEach((slider, i) => {
-        slider.addEventListener("input", () => redistribute(i, Number(slider.value)));
+        slider.addEventListener("input", () => onSliderInput(i, slider));
       });
 
       // Modelled Pareto approximation, calibrated against the aggregate shape
@@ -148,13 +151,35 @@ const startups = Array.from({ length: STARTUP_COUNT }, (_, i) => ({
         return Math.min(xm / Math.pow(1 - v, 1 / alpha), 300); // power-law outlier tail
       }
 
+      function fundMultiple(amounts, multiples) {
+        const total = amounts.reduce((sum, amount, i) => sum + amount * multiples[i], 0);
+        return total / FUND_TOTAL;
+      }
+
       form.addEventListener("submit", (event) => {
         event.preventDefault();
-        const totalReturn = allocations.reduce((sum, amount) => sum + amount * drawMultiple(), 0);
-        const fundMultiple = totalReturn / FUND_TOTAL;
-        returnEl.textContent =
-          `Fund return: ${fundMultiple.toFixed(2)}x on $${FUND_TOTAL.toLocaleString("en-AU")} allocated ` +
-          `(modelled outcome, not a real fund result).`;
+        if (remaining() !== 0) return;
+
+        // The same draw is applied to the visitor's split and to two
+        // reference strategies, so the comparison isolates the effect of
+        // allocation shape rather than re-rolling the outcome.
+        const multiples = allocations.map(() => drawMultiple());
+        const evenAmounts = allocations.map(() => FUND_TOTAL / allocations.length);
+        const concentratedAmounts = allocations.map((_, i) => (i === 0 ? FUND_TOTAL : 0));
+
+        const yourMultiple = fundMultiple(allocations, multiples);
+        const evenMultiple = fundMultiple(evenAmounts, multiples);
+        const concentratedMultiple = fundMultiple(concentratedAmounts, multiples);
+
+        returnEl.textContent = `${yourMultiple.toFixed(2)}x`;
+        compareEl.textContent =
+          `Even split: ${evenMultiple.toFixed(2)}x · All in one bet: ${concentratedMultiple.toFixed(2)}x ` +
+          `· modelled outcome, not a real fund result.`;
+
+        returnEl.classList.remove("payoff-pop");
+        // Force a reflow so the animation class can be re-added on repeat submits.
+        void returnEl.offsetWidth;
+        returnEl.classList.add("payoff-pop");
       });
 
       render();

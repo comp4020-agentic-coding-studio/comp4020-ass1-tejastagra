@@ -1,16 +1,240 @@
+:root {
+  --bg: #f6f4ef;
+  --surface: #fff;
+  --text: #1a1a1a;
+  --muted: #6b6558;
+  --accent: #0b5fff;
+  --track: #e2ded3;
+  --border: #e6e2d8;
+}
+
 body {
   margin: 0;
-  padding: 2rem;
-  font-family: system-ui, sans-serif;
+  padding: 0 1.5rem 4rem;
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
   line-height: 1.6;
-  color: #1a1a1a;
+  color: var(--text);
+  background: var(--bg);
 }
 
 main {
-  max-width: 40rem;
+  max-width: 64rem;
   margin: 0 auto;
 }
 
+header nav {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 1.25rem 0 0;
+}
+
 a {
-  color: #0b5fff;
+  color: var(--accent);
+}
+
+h1 {
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  margin-bottom: 0.5rem;
+}
+
+.framing {
+  max-width: 40rem;
+  color: var(--muted);
+  font-size: 1.1rem;
+  margin-top: 0;
+}
+
+.framing strong {
+  color: var(--text);
+}
+
+.remaining-bar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg);
+  padding: 0.75rem 0 1rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.remaining-number {
+  margin: 0;
+  font-size: clamp(1.75rem, 5vw, 2.75rem);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.allocation-prompt {
+  margin: 0.25rem 0 0;
+  min-height: 1.4em;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.startup-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  list-style: none;
+  margin: 0 0 2rem;
+  padding: 0;
+}
+
+@media (width <= 900px) {
+  .startup-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (width <= 600px) {
+  .startup-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.startup-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.startup-card label {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.startup-card output {
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+input[type="range"] {
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--track);
+  outline: none;
+  margin: 0.25rem 0;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: transparent;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  margin-top: -6px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--surface);
+  box-shadow: 0 0 0 1px var(--border);
+  cursor: pointer;
+}
+
+input[type="range"]::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--track);
+}
+
+input[type="range"]::-moz-range-progress {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--surface);
+  cursor: pointer;
+}
+
+.allocate-button {
+  appearance: none;
+  border: none;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--surface);
+  font-size: 1.1rem;
+  font-weight: 600;
+  padding: 0.85rem 2.5rem;
+  cursor: pointer;
+}
+
+.allocate-button:disabled {
+  background: var(--track);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.allocate-button:not(:disabled):hover {
+  background: #094ecc;
+}
+
+.payoff {
+  margin-top: 2.5rem;
+  min-height: 5rem;
+}
+
+.payoff-number {
+  font-size: clamp(2.5rem, 8vw, 4rem);
+  font-weight: 700;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.payoff-compare {
+  margin: 0.5rem 0 0;
+  color: var(--muted);
+}
+
+@keyframes payoff-pop {
+  from {
+    transform: scale(0.92);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.payoff-pop {
+  animation: payoff-pop 0.35s ease-out;
+}
+
+.info-panel {
+  max-width: 40rem;
+  margin: 3rem auto 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.info-panel summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.info-panel p {
+  margin-top: 0.5rem;
 }
