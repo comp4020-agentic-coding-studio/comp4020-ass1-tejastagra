@@ -53,6 +53,20 @@ the fund was diversified.
    submit button's `disabled` state flips correctly in both directions
    ([`6127606`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-tejastagra/commit/6127606)).
 
+4. **Reversing the "don't copy lawsofux.com" rule on purpose** --- CLAUDE.md
+   originally said not to copy lawsofux.com's card-grid layout or per-card
+   colour variety. When asked to make cards big and visually distinct with a
+   colour and icon per startup, in that specific style, I flagged the direct
+   conflict with the existing rule rather than just doing it, since silently
+   overriding a written constraint isn't a small decision. Given the explicit
+   go-ahead, I updated CLAUDE.md's "Visual style reference" section first, so
+   the rule and the code agree, then built per-card accent colours and icons.
+   I also added a "How the power law works" explainer section styled after
+   ciechanow.ski/mechanical-watch, using static example diagrams clearly
+   labelled as illustrative rather than live simulation output, to keep the
+   data-integrity rule intact even as the design scope grew
+   ([`50725a0`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-tejastagra/commit/50725a0)).
+
 ## Before you ship
 
 `pnpm check:evidence` verifies your citations resolve to real commits, that the
