@@ -346,14 +346,17 @@ h1 {
 }
 
 .fee-info {
-  max-width: 56rem;
+  position: fixed;
+  z-index: 20;
+  width: min(30rem, calc(100vw - 2rem));
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 0.5rem;
   padding: 1rem;
-  margin: -0.5rem 0 1.5rem;
+  margin: 0;
   color: var(--muted);
   font-size: 1.15rem;
+  box-shadow: 0 0.75rem 2rem rgb(0 0 0 / 15%);
 }
 
 .fee-info p {

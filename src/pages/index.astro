@@ -1026,10 +1026,42 @@ const STRATEGY_EXAMPLE = [
         render();
       });
 
+      function positionFeeInfo() {
+        const margin = 12;
+        const toggleRect = feeToggle.getBoundingClientRect();
+        const infoRect = feeInfo.getBoundingClientRect();
+        let left = toggleRect.left;
+        left = Math.min(left, window.innerWidth - infoRect.width - margin);
+        left = Math.max(left, margin);
+        let top = toggleRect.bottom + 8;
+        if (top + infoRect.height > window.innerHeight - margin) {
+          top = Math.max(margin, toggleRect.top - infoRect.height - 8);
+        }
+        feeInfo.style.left = `${left}px`;
+        feeInfo.style.top = `${top}px`;
+      }
+
+      function closeFeeInfo() {
+        feeToggle.setAttribute("aria-expanded", "false");
+        feeInfo.hidden = true;
+        document.removeEventListener("click", onOutsideFeeInfoClick);
+      }
+
+      function onOutsideFeeInfoClick(event) {
+        if (feeInfo.contains(event.target) || feeToggle.contains(event.target)) return;
+        closeFeeInfo();
+      }
+
       feeToggle.addEventListener("click", () => {
         const expanded = feeToggle.getAttribute("aria-expanded") === "true";
-        feeToggle.setAttribute("aria-expanded", String(!expanded));
-        feeInfo.hidden = expanded;
+        if (expanded) {
+          closeFeeInfo();
+          return;
+        }
+        feeToggle.setAttribute("aria-expanded", "true");
+        feeInfo.hidden = false;
+        positionFeeInfo();
+        document.addEventListener("click", onOutsideFeeInfoClick);
       });
 
       // Appears once near the bottom of the page rather than on load, and
