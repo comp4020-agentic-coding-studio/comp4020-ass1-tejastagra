@@ -67,6 +67,17 @@ the fund was diversified.
    data-integrity rule intact even as the design scope grew
    ([`50725a0`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-tejastagra/commit/50725a0)).
 
+5. **Adding per-startup returns after a design review question** --- until now
+   the payoff section only showed the fund-level multiple (yours vs. even
+   split vs. concentrated), which never actually showed which single startup
+   caused it. When asked why the UI didn't show per-company returns to make
+   the outlier visible, I agreed it was a real gap against the thesis and
+   added a return badge per card plus a ranked breakdown list, highlighting
+   whichever startup's draw is the outlier. Verified with a jsdom script that
+   drives a real submit and checks the top of the ranked list matches the
+   highlighted card
+   ([`72815d6`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-tejastagra/commit/72815d6)).
+
 ## Before you ship
 
 `pnpm check:evidence` verifies your citations resolve to real commits, that the
