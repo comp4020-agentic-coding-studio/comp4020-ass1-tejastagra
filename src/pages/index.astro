@@ -107,7 +107,10 @@ const STRATEGY_EXAMPLE = [
     <title>COMP4020 prototype</title>
   </head>
   <body>
-    <main>
+    <nav aria-label="Primary">
+      <a href="#main-content" class="visually-hidden">Skip to main content</a>
+    </nav>
+    <main id="main-content">
       <h1>The power law simulator</h1>
       <p class="intro">
         A "venture fund" is a pool of money that professional investors put into young,
@@ -117,11 +120,6 @@ const STRATEGY_EXAMPLE = [
         over. This page walks through how that actually plays out. You play fund manager: split
         a fixed pool of money across {STARTUP_COUNT} startups, then see what comes back.
       </p>
-      <nav aria-label="Primary">
-        <p class="skip-link">
-          New to venture investing? <a href="#explainer">Read how the power law works first ↓</a>
-        </p>
-      </nav>
       <p class="framing">
         This fund raised ${RAISED_TOTAL.toLocaleString("en-AU")}. Fees take about 20% over its
         life. That leaves <strong data-testid="fund-total">${FUND_TOTAL.toLocaleString("en-AU")}</strong> to

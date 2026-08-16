@@ -52,15 +52,6 @@ h1 {
   margin: 0 0 1rem;
 }
 
-.skip-link {
-  margin: 0 0 1.5rem;
-  font-size: 1.15rem;
-}
-
-.skip-link a {
-  font-weight: 600;
-}
-
 .framing {
   max-width: 56rem;
   color: var(--muted);
