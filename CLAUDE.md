@@ -182,9 +182,42 @@ links, `import.meta.env.BASE_URL` already carries it.
 
 ## This file is yours
 
-This CLAUDE.md is a starting point, not a fixed rulebook. As you learn what your
-prototype needs --- a convention to hold the agent to, a sensor that keeps
-catching you out, a fact about the stack the agent keeps getting wrong --- write
-it down here. Growing this file is the work of harness engineering, and the gap
-between this boilerplate and your own version is part of what your prototype
-says about the developer you're becoming.
+## The thesis (do not drift from this)
+
+No matter how you diversify a VC fund across many startups, a single outlier investment will determine almost all of your returns. Every feature decision gets checked against this sentence. If a feature does not serve it, cut it.
+
+Do not add:
+- Multiple fund vintages
+- IRR vs MOIC toggles
+- Portfolio construction theory beyond the single allocation step
+- User accounts, save/load, or any backend
+
+## Data integrity
+
+- The return distribution must be either real published data or a clearly labelled modelled approximation (eg Pareto distribution parameterised to match publicly reported venture return curves).
+- Never silently swap in placeholder or fabricated numbers. If a number is modelled rather than sourced, label it as modelled in the UI copy, not just in code comments.
+- Cite the data source in the app itself (footer or info panel), not only in the README.
+
+## Check in with me
+
+- Before making any non-trivial decision (data source choice, distribution parameters, visual layout direction, scope cuts), stop and check with me rather than assuming and proceeding.
+- If you hit a fork where more than one reasonable approach exists, present the options briefly and wait for my call instead of picking one silently.
+- Do not mark a task as "done" without telling me what you changed and why, so I have something concrete to cite in PROCESS.md.
+- If you're about to throw away an attempt or start over, tell me what didn't work and why before doing it. That's exactly the kind of moment that needs to end up in PROCESS.md.
+
+## Visual style reference
+
+Reference: lawsofux.com. Do not copy its design language, its card-grid-of-laws layout, its content, or its dark colour scheme. Use a light background instead. Match the general feel otherwise:
+
+- Light background, restrained and high contrast, not stark white with no depth.
+- Typography does the heavy lifting, generous whitespace, no unnecessary chrome or decoration.
+- Minimal nav, minimal UI furniture, let the one interaction and the data be the whole page.
+- Clean sans-serif throughout, no default browser styling left untouched (no unstyled sliders, buttons, or inputs).
+
+If a design decision is ambiguous, check with me before picking a direction (see "Check in with me" above).
+
+## Style
+
+- No filler copy, no marketing tone. Direct, plain language throughout the UI text.
+- No Oxford commas, no em dashes anywhere in written copy.
+- UK English spelling (eg "visualise", "colour").

@@ -1,5 +1,13 @@
 ---
 import "../../styles.css";
+
+const FUND_TOTAL = 10_000_000;
+const STARTUP_COUNT = 20;
+const EVEN_SPLIT = FUND_TOTAL / STARTUP_COUNT;
+const startups = Array.from({ length: STARTUP_COUNT }, (_, i) => ({
+  id: i + 1,
+  name: `Startup ${i + 1}`,
+}));
 ---
 
 <!doctype html>
@@ -16,11 +24,140 @@ import "../../styles.css";
       </nav>
     </header>
     <main>
-      <h1>COMP4020 prototype</h1>
-      <p data-testid="intro">
-        Replace this with your prototype. This week's brief is on the course website;
-        <code>spec/README.md</code> explains how the checks in this repo relate to it.
-      </p>
+      <h1>The power law allocator</h1>
+
+      <p data-testid="fund-total">Fund: ${FUND_TOTAL.toLocaleString("en-AU")}</p>
+
+      <form id="allocator-form">
+        <ul>
+          {
+            startups.map((startup) => (
+              <li>
+                <label for={`slider-${startup.id}`}>{startup.name}</label>
+                <input
+                  type="range"
+                  id={`slider-${startup.id}`}
+                  name={`slider-${startup.id}`}
+                  data-testid="allocation-slider"
+                  data-index={startup.id - 1}
+                  min="0"
+                  max={FUND_TOTAL}
+                  step="10000"
+                  value={EVEN_SPLIT}
+                />
+                <output for={`slider-${startup.id}`} id={`value-${startup.id}`}>
+                  ${EVEN_SPLIT.toLocaleString("en-AU")}
+                </output>
+              </li>
+            ))
+          }
+        </ul>
+
+        <p data-testid="fund-remaining" aria-live="polite">Remaining: $0</p>
+
+        <button type="submit" data-testid="allocate-submit">Allocate</button>
+      </form>
+
+      <p data-testid="fund-return" aria-live="polite"></p>
     </main>
+
+    <footer>
+      <p data-testid="return-model-note">
+        Returns are a modelled Pareto approximation, not real fund or startup data. Parameters
+        are set so most outcomes land near or below 1x with a small chance of a 10x+ outlier,
+        broadly matching the aggregate pattern in Correlation Ventures' venture outcomes
+        analysis (around two-thirds of financings return below 1x; a small share return 10x
+        or more).
+      </p>
+    </footer>
+
+    <script is:inline define:vars={{ FUND_TOTAL, STARTUP_COUNT }}>
+      const sliders = Array.from(document.querySelectorAll('[data-testid="allocation-slider"]'));
+      const outputs = sliders.map((slider) => document.getElementById(`value-${slider.id.split("-")[1]}`));
+      const remainingEl = document.querySelector('[data-testid="fund-remaining"]');
+      const returnEl = document.querySelector('[data-testid="fund-return"]');
+      const form = document.getElementById("allocator-form");
+
+      let allocations = sliders.map((slider) => Number(slider.value));
+
+      const currency = (n) => `$${Math.round(n).toLocaleString("en-AU")}`;
+
+      // Rounds each allocation to a whole dollar while keeping the sum exactly
+      // equal to `total`, by handing the leftover cents to the largest fractional
+      // remainders first.
+      function largestRemainderRound(values, total) {
+        const floors = values.map(Math.floor);
+        const used = floors.reduce((a, b) => a + b, 0);
+        const remainder = total - used;
+        const order = values
+          .map((v, i) => ({ i, frac: v - Math.floor(v) }))
+          .sort((a, b) => b.frac - a.frac);
+        const result = [...floors];
+        for (let k = 0; k < remainder; k++) {
+          result[order[k % order.length].i] += 1;
+        }
+        return result;
+      }
+
+      function render() {
+        allocations.forEach((value, i) => {
+          sliders[i].value = String(value);
+          outputs[i].textContent = currency(value);
+        });
+        const total = allocations.reduce((a, b) => a + b, 0);
+        remainingEl.textContent = `Remaining: ${currency(FUND_TOTAL - total)}`;
+      }
+
+      // The fund is fixed: moving one slider takes the difference from every
+      // other startup, proportional to what they currently hold, so the total
+      // always equals the fund.
+      function redistribute(changedIndex, rawValue) {
+        const newValue = Math.max(0, Math.min(FUND_TOTAL, rawValue));
+        const othersTotalOld = FUND_TOTAL - allocations[changedIndex];
+        const othersTotalNew = FUND_TOTAL - newValue;
+
+        let scaled;
+        if (othersTotalOld <= 0) {
+          const share = othersTotalNew / (allocations.length - 1);
+          scaled = allocations.map((_, i) => (i === changedIndex ? 0 : share));
+        } else {
+          const scale = othersTotalNew / othersTotalOld;
+          scaled = allocations.map((v, i) => (i === changedIndex ? 0 : v * scale));
+        }
+        scaled[changedIndex] = newValue;
+
+        allocations = largestRemainderRound(scaled, FUND_TOTAL);
+        render();
+      }
+
+      sliders.forEach((slider, i) => {
+        slider.addEventListener("input", () => redistribute(i, Number(slider.value)));
+      });
+
+      // Modelled Pareto approximation, calibrated against the aggregate shape
+      // reported in Correlation Ventures' venture outcomes data, not sourced
+      // from a real per-deal dataset. Parameters are provisional.
+      function drawMultiple() {
+        const u = Math.random();
+        if (u < 0.65) return Math.random(); // total loss to breakeven
+        if (u < 0.9) return 1 + Math.random() * 4; // modest return
+        if (u < 0.97) return 5 + Math.random() * 5; // strong return
+        const xm = 10;
+        const alpha = 1.2;
+        const v = Math.random();
+        return Math.min(xm / Math.pow(1 - v, 1 / alpha), 300); // power-law outlier tail
+      }
+
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const totalReturn = allocations.reduce((sum, amount) => sum + amount * drawMultiple(), 0);
+        const fundMultiple = totalReturn / FUND_TOTAL;
+        returnEl.textContent =
+          `Fund return: ${fundMultiple.toFixed(2)}x on $${FUND_TOTAL.toLocaleString("en-AU")} allocated ` +
+          `(modelled outcome, not a real fund result).`;
+      });
+
+      render();
+    </script>
   </body>
 </html>
