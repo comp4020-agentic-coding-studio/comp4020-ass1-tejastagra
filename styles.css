@@ -474,6 +474,14 @@ h1 {
   font-weight: 700;
 }
 
+.bubble-label-outside {
+  text-anchor: middle;
+  fill: var(--muted);
+  font-family: inherit;
+  pointer-events: none;
+  user-select: none;
+}
+
 .info-panel {
   max-width: 40rem;
   margin: 3rem auto 0;

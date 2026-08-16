@@ -570,79 +570,207 @@ const STRATEGY_EXAMPLE = [
         return best;
       }
 
-      // How many side-by-side columns the chart spans at a given width —
-      // more columns on wide viewports so the layout actually fills the
-      // available width instead of collapsing into one tall stack.
-      function bubbleColumnCount(width) {
-        if (width < 480) return 2;
-        if (width < 760) return 3;
-        if (width < 1100) return 4;
-        return 5;
+      // Small circles can be too tight to hold a name and multiple without
+      // truncation — the true size difference is the point, not label
+      // legibility, so those get a compact single-line label just outside
+      // the circle instead of forcing the circle to grow.
+      const OUTSIDE_FONT = 9.5;
+      const OUTSIDE_MAX_WIDTH = 108;
+
+      function computeOutsideLabelText(ctx, name, multipleText) {
+        const full = `${name} ${multipleText}`;
+        if (measureLineWidth(ctx, full, OUTSIDE_FONT) <= OUTSIDE_MAX_WIDTH) return full;
+        let truncated = name;
+        while (truncated.length > 1) {
+          truncated = truncated.slice(0, -1);
+          const candidate = `${truncated}… ${multipleText}`;
+          if (measureLineWidth(ctx, candidate, OUTSIDE_FONT) <= OUTSIDE_MAX_WIDTH) return candidate;
+        }
+        return multipleText;
       }
 
-      // Packs circles largest-first into fixed-width columns, always adding
-      // the next circle to whichever column is currently shortest. The
-      // biggest circles (placed first) start a column each, so they land
-      // side by side across the top and the layout spans the full width;
-      // smaller ones settle in underneath whichever column has room. Circles
-      // never overlap: same-column circles stack edge to edge, and no
-      // circle's radius is ever allowed to exceed half its own column's
-      // width, so neighbouring columns can't reach into each other either.
-      function packCirclesMasonry(items, width, pad, gap, cols) {
-        const innerWidth = width - pad * 2 - gap * (cols - 1);
-        const colWidth = innerWidth / cols;
-        const colHeights = Array.from({ length: cols }, () => pad);
-        const colCenters = Array.from({ length: cols }, (_, i) => pad + i * (colWidth + gap) + colWidth / 2);
+      // Two circles of radius r1/r2 centred at (x1,y1)/(x2,y2): the up-to-two
+      // points sitting at distance r1 from the first and r2 from the second —
+      // the candidate spots where a new circle can sit tangent to both at once.
+      function circleIntersections(x1, y1, r1, x2, y2, r2) {
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        const d = Math.hypot(dx, dy);
+        if (d === 0 || d > r1 + r2 || d < Math.abs(r1 - r2)) return [];
+        const a = (r1 * r1 - r2 * r2 + d * d) / (2 * d);
+        const hSq = r1 * r1 - a * a;
+        if (hSq < 0) return [];
+        const h = Math.sqrt(Math.max(0, hSq));
+        const mx = x1 + (a * dx) / d;
+        const my = y1 + (a * dy) / d;
+        return [
+          { x: mx + (h * dy) / d, y: my - (h * dx) / d },
+          { x: mx - (h * dy) / d, y: my + (h * dx) / d },
+        ];
+      }
 
-        items.forEach((item) => {
-          let col = 0;
-          for (let i = 1; i < cols; i++) if (colHeights[i] < colHeights[col]) col = i;
-          item.x = colCenters[col];
-          item.y = colHeights[col] + item.r;
-          colHeights[col] += item.r * 2 + gap;
+      function isValidCirclePlacement(point, r, placed) {
+        return placed.every((o) => Math.hypot(point.x - o.x, point.y - o.y) >= o.r + r - 0.5);
+      }
+
+      // Fallback for when no pair of already-placed circles offers a valid
+      // tangent point (eg only one circle placed so far): walks the compass
+      // around the nearest circle and keeps the first open, non-overlapping angle.
+      function placeTangentToNearest(item, placed, aspectX) {
+        let best = null;
+        placed.forEach((o) => {
+          for (let k = 0; k < 32; k++) {
+            const angle = (k / 32) * Math.PI * 2;
+            const dist = o.r + item.r;
+            const point = { x: o.x + Math.cos(angle) * dist, y: o.y + Math.sin(angle) * dist };
+            if (!isValidCirclePlacement(point, item.r, placed)) continue;
+            const cost = Math.hypot(point.x / aspectX, point.y);
+            if (!best || cost < best.cost) best = { x: point.x, y: point.y, cost };
+          }
         });
-
-        const height = Math.max(...colHeights) - gap + pad;
-        return { height, colWidth };
+        item.x = best ? best.x : 0;
+        item.y = best ? best.y : 0;
       }
 
-      // Draws each startup as a circle whose area is proportional to its
-      // return multiple above a shared legibility floor, so one dominant
-      // circle among many small (but still readable) ones makes the
-      // power-law point visible at a glance instead of a scanned list.
+      // Greedy circle packing: the biggest circle goes first, then every
+      // later circle (largest to smallest) is placed tangent to whichever
+      // pair of already-placed circles gives a valid, non-overlapping spot
+      // closest to the growing cluster — so every circle ends up touching at
+      // least one other, with no grid or column structure and no dead space.
+      // aspectX biases candidates towards a wider-than-tall cluster, matching
+      // how much horizontal room the chart actually has.
+      function packCirclesCluster(items, aspectX) {
+        const placed = [];
+        items.forEach((item, i) => {
+          if (i === 0) {
+            item.x = 0;
+            item.y = 0;
+          } else if (i === 1) {
+            item.x = placed[0].r + item.r;
+            item.y = 0;
+          } else {
+            let best = null;
+            for (let a = 0; a < placed.length; a++) {
+              for (let b = a + 1; b < placed.length; b++) {
+                const A = placed[a];
+                const B = placed[b];
+                const candidates = circleIntersections(A.x, A.y, A.r + item.r, B.x, B.y, B.r + item.r);
+                candidates.forEach((point) => {
+                  if (!isValidCirclePlacement(point, item.r, placed)) return;
+                  const cost = Math.hypot(point.x / aspectX, point.y);
+                  if (!best || cost < best.cost) best = { x: point.x, y: point.y, cost };
+                });
+              }
+            }
+            if (best) {
+              item.x = best.x;
+              item.y = best.y;
+            } else {
+              placeTangentToNearest(item, placed, aspectX);
+            }
+          }
+          placed.push(item);
+        });
+      }
+
+      // Draws each startup as a circle whose area is strictly proportional to
+      // its return multiple, no minimum floor — the true size difference
+      // between a near-total-loss and the outlier is the whole point. Circles
+      // are packed into one connected cluster (packCirclesCluster) rather
+      // than a grid, then the whole cluster is scaled as one so the biggest
+      // circle always fits on screen with room to spare.
       function renderBubbleChart(multiples) {
         const svgNS = "http://www.w3.org/2000/svg";
         const width = Math.max(240, bubbleChart.clientWidth || 800);
         const pad = 20;
-        const gap = 8;
-        // Circles are capped to fit inside their own column rather than
-        // half the whole page — a cap of "half the container" made the
-        // dominant circle's own row as tall as the page was wide, which is
-        // what was blowing the chart's height out. Capping to half a
-        // column's width instead keeps the giant circle clearly dominant
-        // without the layout ballooning vertically, and still guarantees it
-        // (and its label) always fits fully on screen.
-        const cols = bubbleColumnCount(width);
-        const colWidth = (width - pad * 2 - gap * (cols - 1)) / cols;
-        const rMax = Math.max(40, colWidth / 2 - 4);
 
-        const labels = multiples.map((m, i) => computeLabel(bubbleMeasureCtx, STARTUP_NAMES[i], `${m.toFixed(2)}x`));
-        const radiusFloor = Math.min(rMax, Math.max(...labels.map((l) => l.r)));
-
-        const maxMultiple = Math.max(...multiples);
-        const extraSpan = Math.max(0, rMax * rMax - radiusFloor * radiusFloor);
-        const areaSlope = maxMultiple > 0 ? extraSpan / maxMultiple : 0;
-
+        // Natural, pre-fit radii: area proportional to the return multiple.
+        // The 1.5px floor just keeps a near-zero multiple visible as a dot —
+        // it's not sized for label legibility.
         const circles = multiples.map((multiple, i) => ({
           index: i,
           name: STARTUP_NAMES[i],
           multiple,
-          label: labels[i],
-          r: Math.min(rMax, Math.sqrt(radiusFloor * radiusFloor + areaSlope * multiple)),
+          r: Math.max(1.5, Math.sqrt(Math.max(0, multiple)) * 18),
         }));
 
         const sorted = [...circles].sort((a, b) => b.r - a.r);
-        const { height } = packCirclesMasonry(sorted, width, pad, gap, cols);
+        const aspectX = Math.min(3, Math.max(1, width / 450));
+        packCirclesCluster(sorted, aspectX);
+
+        const rawMinX = Math.min(...sorted.map((c) => c.x - c.r));
+        const rawMaxX = Math.max(...sorted.map((c) => c.x + c.r));
+        const packedWidth = rawMaxX - rawMinX;
+        const availableWidth = Math.max(1, width - pad * 2);
+
+        // Fit the whole cluster to the available width: shrink it if the
+        // natural pack would overflow (this is what keeps the dominant
+        // circle fully on screen even for an extreme draw), or grow it —
+        // capped — to use the space when the draw is low-variance and the
+        // natural pack is small. Either way every circle's relative size
+        // stays exactly proportional, since the same factor scales them all.
+        const MAX_UPSCALE = 2.4;
+        const scale =
+          packedWidth > availableWidth ? availableWidth / packedWidth : Math.min(MAX_UPSCALE, availableWidth / packedWidth);
+        sorted.forEach((c) => {
+          c.x *= scale;
+          c.y *= scale;
+          c.r *= scale;
+        });
+
+        const maxMultiple = Math.max(...multiples);
+
+        // Labels are measured in real (unscaled-by-us) pixels, so a small
+        // circle's outside label can stick out sideways further than the
+        // circle itself — recompute the labels and the label-inclusive
+        // bounding box, and if that's still wider than the available width,
+        // fold in one more uniform shrink so the labels themselves never push
+        // a circle's own edge past the viewport.
+        let labels;
+        let minX;
+        let maxX;
+        let minY;
+        let maxY;
+        for (let pass = 0; pass < 3; pass++) {
+          labels = sorted.map((c) => {
+            const inside = computeLabel(bubbleMeasureCtx, c.name, `${c.multiple.toFixed(2)}x`);
+            if (inside.r <= c.r) return { outside: false, lines: inside.lines };
+            const text = computeOutsideLabelText(bubbleMeasureCtx, c.name, `${c.multiple.toFixed(2)}x`);
+            return { outside: true, text, width: measureLineWidth(bubbleMeasureCtx, text, OUTSIDE_FONT) };
+          });
+
+          minX = Infinity;
+          maxX = -Infinity;
+          minY = Infinity;
+          maxY = -Infinity;
+          sorted.forEach((c, i) => {
+            const label = labels[i];
+            const left = label.outside ? c.x - Math.max(c.r, label.width / 2 + 4) : c.x - c.r;
+            const right = label.outside ? c.x + Math.max(c.r, label.width / 2 + 4) : c.x + c.r;
+            const bottom = label.outside ? c.y + c.r + 12 + OUTSIDE_FONT : c.y + c.r;
+            minX = Math.min(minX, left);
+            maxX = Math.max(maxX, right);
+            minY = Math.min(minY, c.y - c.r);
+            maxY = Math.max(maxY, bottom);
+          });
+
+          const footprintWidth = maxX - minX;
+          if (footprintWidth <= availableWidth) break;
+          const extraShrink = availableWidth / footprintWidth;
+          sorted.forEach((c) => {
+            c.x *= extraShrink;
+            c.y *= extraShrink;
+            c.r *= extraShrink;
+          });
+        }
+
+        const shiftX = pad - minX + Math.max(0, (availableWidth - (maxX - minX)) / 2);
+        const shiftY = pad - minY;
+        sorted.forEach((c) => {
+          c.x += shiftX;
+          c.y += shiftY;
+        });
+        const height = maxY - minY + pad * 2;
 
         const svg = document.createElementNS(svgNS, "svg");
         svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
@@ -655,8 +783,9 @@ const STRATEGY_EXAMPLE = [
         );
 
         const items = Array.from({ length: circles.length });
-        circles.forEach((c) => {
+        sorted.forEach((c, i) => {
           const isOutlier = c.multiple === maxMultiple;
+          const label = labels[i];
           const g = document.createElementNS(svgNS, "g");
           g.setAttribute("class", isOutlier ? "bubble bubble-outlier" : "bubble");
           g.dataset.index = String(c.index);
@@ -671,24 +800,51 @@ const STRATEGY_EXAMPLE = [
           title.textContent = `${c.name}: ${c.multiple.toFixed(2)}x`;
           g.appendChild(title);
 
-          const labelEls = c.label.lines.map((line) => {
+          let labelEls;
+          if (label.outside) {
+            const dy = c.r + 12;
             const textEl = document.createElementNS(svgNS, "text");
             textEl.setAttribute("x", String(c.x));
-            textEl.setAttribute("y", String(c.y + line.dy));
-            textEl.setAttribute("class", line.className);
-            textEl.setAttribute("font-size", String(line.fontSize));
-            textEl.textContent = line.text;
+            textEl.setAttribute("y", String(c.y + dy));
+            textEl.setAttribute("class", "bubble-label-outside");
+            textEl.setAttribute("font-size", String(OUTSIDE_FONT));
+            textEl.textContent = label.text;
             g.appendChild(textEl);
-            return { el: textEl, dy: line.dy };
-          });
+            labelEls = [{ el: textEl, dy }];
+          } else {
+            labelEls = label.lines.map((line) => {
+              const textEl = document.createElementNS(svgNS, "text");
+              textEl.setAttribute("x", String(c.x));
+              textEl.setAttribute("y", String(c.y + line.dy));
+              textEl.setAttribute("class", line.className);
+              textEl.setAttribute("font-size", String(line.fontSize));
+              textEl.textContent = line.text;
+              g.appendChild(textEl);
+              return { el: textEl, dy: line.dy };
+            });
+          }
 
           svg.appendChild(g);
-          items[c.index] = { el: circleEl, r: c.r, x: c.x, y: c.y, labelEls };
+          items[c.index] = {
+            el: circleEl,
+            r: c.r,
+            x: c.x,
+            y: c.y,
+            restX: c.x,
+            restY: c.y,
+            labelEls,
+            amp: 2 + Math.random() * 2.5,
+            freq1: 0.35 + Math.random() * 0.35,
+            freq2: 0.3 + Math.random() * 0.35,
+            phase1: Math.random() * Math.PI * 2,
+            phase2: Math.random() * Math.PI * 2,
+          };
         });
 
         bubbleChart.innerHTML = "";
         bubbleChart.appendChild(svg);
         bubbleChartState = { items, width, height, pad };
+        startBubbleAnimation();
       }
 
       // Dragging: a soft, non-physical collision pass so the grabbed circle
@@ -703,7 +859,7 @@ const STRATEGY_EXAMPLE = [
       }
 
       function resolveBubbleCollisions(items, draggedIndex, width, height, pad) {
-        for (let iter = 0; iter < 4; iter++) {
+        for (let iter = 0; iter < 24; iter++) {
           for (let i = 0; i < items.length; i++) {
             for (let j = i + 1; j < items.length; j++) {
               const a = items[i];
@@ -751,6 +907,46 @@ const STRATEGY_EXAMPLE = [
         });
       }
 
+      // Continuous idle drift: each circle gently bobs around its own resting
+      // spot on a slightly different sine/cosine timing so the cluster doesn't
+      // move as one block, while the same collision pass used for dragging
+      // keeps them from drifting into overlap. A sustained push (eg another
+      // circle dragged on top) is folded back into the resting spot each
+      // frame so it sticks instead of snapping back on the next oscillation.
+      // Skipped entirely for prefers-reduced-motion — those circles just sit
+      // at rest.
+      let bubbleAnimFrame = null;
+      const bubblesReduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      function bubbleAnimationTick(timestamp) {
+        if (!bubbleChartState) {
+          bubbleAnimFrame = null;
+          return;
+        }
+        const t = timestamp / 1000;
+        const { items, width, height, pad } = bubbleChartState;
+        items.forEach((item, i) => {
+          if (dragCtx && dragCtx.index === i) return;
+          item.x = item.restX + Math.sin(t * item.freq1 + item.phase1) * item.amp;
+          item.y = item.restY + Math.cos(t * item.freq2 + item.phase2) * item.amp * 0.7;
+        });
+        resolveBubbleCollisions(items, dragCtx ? dragCtx.index : -1, width, height, pad);
+        items.forEach((item, i) => {
+          if (dragCtx && dragCtx.index === i) return;
+          const driftX = Math.sin(t * item.freq1 + item.phase1) * item.amp;
+          const driftY = Math.cos(t * item.freq2 + item.phase2) * item.amp * 0.7;
+          item.restX = item.x - driftX;
+          item.restY = item.y - driftY;
+        });
+        applyBubblePositions();
+        bubbleAnimFrame = requestAnimationFrame(bubbleAnimationTick);
+      }
+
+      function startBubbleAnimation() {
+        if (bubblesReduceMotion || bubbleAnimFrame) return;
+        bubbleAnimFrame = requestAnimationFrame(bubbleAnimationTick);
+      }
+
       function onBubblePointerDown(event) {
         if (!bubbleChartState) return;
         const g = event.target.closest(".bubble");
@@ -773,6 +969,8 @@ const STRATEGY_EXAMPLE = [
         const item = items[dragCtx.index];
         item.x = Math.min(width - pad - item.r, Math.max(pad + item.r, point.x - dragCtx.offsetX));
         item.y = Math.min(height - pad - item.r, Math.max(pad + item.r, point.y - dragCtx.offsetY));
+        item.restX = item.x;
+        item.restY = item.y;
         resolveBubbleCollisions(items, dragCtx.index, width, height, pad);
         applyBubblePositions();
       }
