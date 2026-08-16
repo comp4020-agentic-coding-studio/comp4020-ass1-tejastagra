@@ -135,12 +135,11 @@ h1 {
 
 .startup-card {
   border: 1px solid var(--border);
-  border-top: 0.4rem solid var(--card-accent, var(--accent));
   border-radius: 1rem;
-  padding: 1.75rem;
+  background: var(--surface);
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
   box-shadow: 0 0.35rem 1rem -0.5rem rgb(0 0 0 / 15%);
   transition:
     transform 0.15s ease-out,
@@ -152,15 +151,57 @@ h1 {
   box-shadow: 0 0.6rem 1.4rem -0.6rem rgb(0 0 0 / 20%);
 }
 
-.startup-icon {
-  width: 3.5rem;
-  height: 3.5rem;
-  color: var(--card-accent, var(--accent));
+.card-header {
+  position: relative;
+  aspect-ratio: 2 / 1;
+  filter: saturate(1) grayscale(0);
+  transition: filter 0.4s ease-out;
 }
 
-.startup-icon svg {
+.card-header svg {
+  display: block;
   width: 100%;
   height: 100%;
+}
+
+.card-header::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgb(246 244 239 / 0%);
+  transition: background 0.4s ease-out;
+}
+
+.card-header.card-header-dimmed {
+  filter: saturate(0.25) grayscale(0.4);
+}
+
+.card-header.card-header-dimmed::after {
+  background: rgb(246 244 239 / 70%);
+}
+
+@keyframes outlier-reveal {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 var(--card-accent, var(--accent));
+  }
+
+  40% {
+    transform: scale(1.04);
+    box-shadow: 0 0 0 0.6rem var(--card-accent, var(--accent));
+  }
+
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0.25rem var(--card-accent, var(--accent));
+  }
+}
+
+.card-body {
+  padding: 1.5rem 1.75rem 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
 }
 
 .startup-name {
@@ -184,8 +225,8 @@ h1 {
 }
 
 .startup-card-outlier {
-  border-top-width: 0.6rem;
-  box-shadow: 0 0 0 0.2rem var(--card-accent, var(--accent));
+  box-shadow: 0 0 0 0.25rem var(--card-accent, var(--accent));
+  animation: outlier-reveal 0.55s ease-out;
 }
 
 .startup-card-outlier .card-return::after {

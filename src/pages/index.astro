@@ -6,125 +6,80 @@ const FUND_TOTAL = 10_000_000;
 const STARTUP_COUNT = 15;
 const STEP = 100_000;
 
-const ICON_STROKE = 'fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"';
-
 const STARTUP_INFO = [
-  {
-    name: "Orbital Analytics",
-    description: "Satellite imagery for crop insurers",
-    icon: `<circle cx="12" cy="12" r="3.5" ${ICON_STROKE}/><ellipse cx="12" cy="12" rx="10" ry="4" ${ICON_STROKE}/>`,
-    bg: "#eaf1ff",
-    accent: "#2f5fd8",
-  },
-  {
-    name: "Loopwave",
-    description: "Recycled battery chemistry for EVs",
-    icon: `<rect x="2" y="8" width="17" height="8" rx="2" ${ICON_STROKE}/><rect x="19" y="10.5" width="2" height="3" ${ICON_STROKE}/><path d="M11 9 L8.5 13 H12 L9.5 17" ${ICON_STROKE}/>`,
-    bg: "#e9faf0",
-    accent: "#1f9d55",
-  },
-  {
-    name: "Fernway Health",
-    description: "Remote diagnostics for rural clinics",
-    icon: `<path d="M12 20 C4 14 3 9 6.5 6.5 C9 4.7 12 6 12 9 C12 6 15 4.7 17.5 6.5 C21 9 20 14 12 20 Z" ${ICON_STROKE}/><path d="M4 13 H9 L10.5 10 L12.5 16 L14 13 H20" ${ICON_STROKE}/>`,
-    bg: "#fdeeee",
-    accent: "#d8425f",
-  },
-  {
-    name: "Cursive AI",
-    description: "Handwriting-to-text for legal filings",
-    icon: `<path d="M3 16 Q6 6 9 16 T15 16 T21 8" ${ICON_STROKE}/>`,
-    bg: "#f3edff",
-    accent: "#7c3fd8",
-  },
-  {
-    name: "Driftline",
-    description: "Autonomous freight barges",
-    icon: `<path d="M2 16 H22 L19 20 H5 Z" ${ICON_STROKE}/><line x1="12" y1="16" x2="12" y2="5" ${ICON_STROKE}/><path d="M12 6 L18 10 H12 Z" ${ICON_STROKE}/>`,
-    bg: "#e8f6fa",
-    accent: "#1a8fa3",
-  },
-  {
-    name: "Solstice Grid",
-    description: "Community solar microgrids",
-    icon: `<circle cx="12" cy="12" r="4" ${ICON_STROKE}/><g ${ICON_STROKE}><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="4.9" y1="4.9" x2="7" y2="7"/><line x1="17" y1="17" x2="19.1" y2="19.1"/><line x1="19.1" y1="4.9" x2="17" y2="7"/><line x1="7" y1="17" x2="4.9" y2="19.1"/></g>`,
-    bg: "#fff7e0",
-    accent: "#c98a12",
-  },
-  {
-    name: "Nomad Labs",
-    description: "Modular housing for disaster relief",
-    icon: `<path d="M4 12 L12 4 L20 12 V20 H4 Z" ${ICON_STROKE}/><line x1="12" y1="14" x2="12" y2="20" ${ICON_STROKE}/>`,
-    bg: "#f1ede4",
-    accent: "#8a6d3b",
-  },
-  {
-    name: "Verdant Foods",
-    description: "Lab-grown fibre for meat alternatives",
-    icon: `<path d="M12 3 C6 3 3 9 3 16 C10 16 16 12 16 6 C16 4.5 14.5 3 12 3 Z" ${ICON_STROKE}/><line x1="4" y1="20" x2="14" y2="8" ${ICON_STROKE}/>`,
-    bg: "#eaf9ee",
-    accent: "#2f8f4e",
-  },
-  {
-    name: "Pathwell",
-    description: "Mental health triage chatbot",
-    icon: `<rect x="3" y="4" width="18" height="12" rx="3" ${ICON_STROKE}/><path d="M8 16 L6 20 L11 16 Z" ${ICON_STROKE}/>`,
-    bg: "#eef2ff",
-    accent: "#3f5fbf",
-  },
-  {
-    name: "Anchor Robotics",
-    description: "Warehouse picking robots",
-    icon: `<circle cx="5" cy="19" r="2" ${ICON_STROKE}/><line x1="5" y1="17" x2="5" y2="10" ${ICON_STROKE}/><line x1="5" y1="10" x2="15" y2="10" ${ICON_STROKE}/><line x1="15" y1="10" x2="15" y2="5" ${ICON_STROKE}/><circle cx="15" cy="5" r="2" ${ICON_STROKE}/>`,
-    bg: "#ecf0f3",
-    accent: "#445566",
-  },
-  {
-    name: "Cinderpoint",
-    description: "Wildfire early-detection sensors",
-    icon: `<path d="M12 2 C8 8 6 11 6 14 a6 6 0 0 0 12 0 c0 -3 -2 -6 -6 -12 Z" ${ICON_STROKE}/>`,
-    bg: "#fdefe9",
-    accent: "#d1552b",
-  },
-  {
-    name: "Marrow Bio",
-    description: "Bone marrow donor matching platform",
-    icon: `<path d="M6 3 C10 7 6 9 6 12 C6 15 10 17 6 21" ${ICON_STROKE}/><path d="M18 3 C14 7 18 9 18 12 C18 15 14 17 18 21" ${ICON_STROKE}/><line x1="7" y1="7" x2="17" y2="7" ${ICON_STROKE}/><line x1="7" y1="17" x2="17" y2="17" ${ICON_STROKE}/>`,
-    bg: "#fcedf4",
-    accent: "#b83b74",
-  },
-  {
-    name: "Tallyworks",
-    description: "Small business bookkeeping automation",
-    icon: `<line x1="3" y1="21" x2="21" y2="21" ${ICON_STROKE}/><rect x="5" y="14" width="4" height="7" ${ICON_STROKE}/><rect x="10.5" y="9" width="4" height="12" ${ICON_STROKE}/><rect x="16" y="4" width="4" height="17" ${ICON_STROKE}/>`,
-    bg: "#f2f7e9",
-    accent: "#5a7d2b",
-  },
-  {
-    name: "Skyloom",
-    description: "Drone-based crop spraying",
-    icon: `<circle cx="12" cy="12" r="2" ${ICON_STROKE}/><g ${ICON_STROKE}><line x1="12" y1="12" x2="5" y2="5"/><circle cx="5" cy="5" r="2"/><line x1="12" y1="12" x2="19" y2="5"/><circle cx="19" cy="5" r="2"/><line x1="12" y1="12" x2="5" y2="19"/><circle cx="5" cy="19" r="2"/><line x1="12" y1="12" x2="19" y2="19"/><circle cx="19" cy="19" r="2"/></g>`,
-    bg: "#eaf6ff",
-    accent: "#1b7fc4",
-  },
-  {
-    name: "Undertone",
-    description: "Noise-cancelling hearing aids",
-    icon: `<path d="M4 13 a8 8 0 0 1 16 0" ${ICON_STROKE}/><path d="M7 13 a5 5 0 0 1 10 0" ${ICON_STROKE}/><circle cx="12" cy="14" r="1.5" ${ICON_STROKE}/>`,
-    bg: "#f5eefb",
-    accent: "#6a4a9c",
-  },
+  { name: "Orbital Analytics", description: "Satellite imagery for crop insurers" },
+  { name: "Loopwave", description: "Recycled battery chemistry for EVs" },
+  { name: "Fernway Health", description: "Remote diagnostics for rural clinics" },
+  { name: "Cursive AI", description: "Handwriting-to-text for legal filings" },
+  { name: "Driftline", description: "Autonomous freight barges" },
+  { name: "Solstice Grid", description: "Community solar microgrids" },
+  { name: "Nomad Labs", description: "Modular housing for disaster relief" },
+  { name: "Verdant Foods", description: "Lab-grown fibre for meat alternatives" },
+  { name: "Pathwell", description: "Mental health triage chatbot" },
+  { name: "Anchor Robotics", description: "Warehouse picking robots" },
+  { name: "Cinderpoint", description: "Wildfire early-detection sensors" },
+  { name: "Marrow Bio", description: "Bone marrow donor matching platform" },
+  { name: "Tallyworks", description: "Small business bookkeeping automation" },
+  { name: "Skyloom", description: "Drone-based crop spraying" },
+  { name: "Undertone", description: "Noise-cancelling hearing aids" },
 ];
 
-const startups = STARTUP_INFO.slice(0, STARTUP_COUNT).map((info, i) => ({
-  id: i + 1,
-  name: info.name,
-  description: info.description,
-  icon: info.icon,
-  bg: info.bg,
-  accent: info.accent,
-  initial: 0,
-}));
+// A small, muted palette reused across cards (lawsofux.com-style flat colour
+// blocks), paired with a lighter/darker tint for the motif drawn on top.
+const PALETTE = [
+  { name: "navy", bg: "#28344a", fg: "#aebbd6" },
+  { name: "teal", bg: "#1f6e64", fg: "#9fd6cc" },
+  { name: "terracotta", bg: "#c1613f", fg: "#f0b79a" },
+  { name: "purple", bg: "#5d4b7a", fg: "#c7b8e0" },
+  { name: "cream", bg: "#ede3c8", fg: "#8a7a4e" },
+];
+
+// Reusable abstract motifs, each a function of a foreground colour, drawn in
+// a 240x120 viewBox so they fill a wide full-bleed block at the card's top.
+const MOTIFS = [
+  // dot grid
+  (fg: string) => {
+    let dots = "";
+    for (let row = 0; row < 3; row++) {
+      for (let col = 0; col < 7; col++) {
+        const cx = 18 + col * 34 + (row % 2 === 1 ? 17 : 0);
+        const cy = 20 + row * 40;
+        const opacity = col % 3 === 0 ? 1 : 0.5;
+        dots += `<circle cx="${cx}" cy="${cy}" r="8" fill="${fg}" opacity="${opacity}"/>`;
+      }
+    }
+    return dots;
+  },
+  // circle and triangle overlap
+  (fg: string) =>
+    `<circle cx="75" cy="65" r="55" fill="${fg}" opacity="0.85"/><polygon points="150,10 232,120 95,120" fill="${fg}" opacity="0.55"/>`,
+  // vertical stripes
+  (fg: string) => {
+    let stripes = "";
+    for (let i = 0; i < 7; i++) {
+      const opacity = i % 2 === 0 ? 0.9 : 0.4;
+      stripes += `<rect x="${i * 34}" y="0" width="17" height="120" fill="${fg}" opacity="${opacity}"/>`;
+    }
+    return stripes;
+  },
+  // concentric circles
+  (fg: string) =>
+    `<circle cx="120" cy="60" r="52" fill="none" stroke="${fg}" stroke-width="9" opacity="0.9"/><circle cx="120" cy="60" r="36" fill="none" stroke="${fg}" stroke-width="9" opacity="0.65"/><circle cx="120" cy="60" r="20" fill="none" stroke="${fg}" stroke-width="9" opacity="0.4"/>`,
+];
+
+const startups = STARTUP_INFO.slice(0, STARTUP_COUNT).map((info, i) => {
+  const palette = PALETTE[i % PALETTE.length];
+  const motif = MOTIFS[i % MOTIFS.length];
+  return {
+    id: i + 1,
+    name: info.name,
+    description: info.description,
+    blockBg: palette.bg,
+    accent: palette.bg,
+    artwork: motif(palette.fg),
+    initial: 0,
+  };
+});
 
 // Illustrative diagrams for the explainer section below: static example
 // figures that show the shape of the power law, not live simulation output.
@@ -209,48 +164,55 @@ const STRATEGY_EXAMPLE = [
         <ul class="startup-grid">
           {
             startups.map((startup) => (
-              <li class="startup-card" style={`background:${startup.bg}; --card-accent:${startup.accent};`}>
-                <div class="startup-icon" aria-hidden="true" set:html={`<svg viewBox="0 0 24 24">${startup.icon}</svg>`} />
-                <p class="startup-name">{startup.name}</p>
-                <p class="startup-description">{startup.description}</p>
-                <p class="card-return" id={`return-${startup.id}`} aria-live="polite"></p>
-                <div class="stepper">
-                  <button
-                    type="button"
-                    class="step-btn"
-                    data-action="decrement"
-                    data-index={startup.id - 1}
-                    aria-label={`Decrease allocation for ${startup.name}`}
-                  >
-                    &minus;
-                  </button>
-                  <output for={`slider-${startup.id}`} id={`value-${startup.id}`}>
-                    ${startup.initial.toLocaleString("en-AU")}
-                  </output>
-                  <button
-                    type="button"
-                    class="step-btn"
-                    data-action="increment"
-                    data-index={startup.id - 1}
-                    aria-label={`Increase allocation for ${startup.name}`}
-                  >
-                    &plus;
-                  </button>
-                </div>
-                <input
-                  type="range"
-                  id={`slider-${startup.id}`}
-                  name={`slider-${startup.id}`}
-                  data-testid="allocation-slider"
-                  data-index={startup.id - 1}
-                  class="visually-hidden"
-                  tabindex="-1"
+              <li class="startup-card" style={`--card-accent:${startup.accent};`}>
+                <div
+                  class="card-header"
+                  style={`background:${startup.blockBg};`}
                   aria-hidden="true"
-                  min="0"
-                  max={FUND_TOTAL}
-                  step="10000"
-                  value={startup.initial}
+                  set:html={`<svg viewBox="0 0 240 120" preserveAspectRatio="xMidYMid slice">${startup.artwork}</svg>`}
                 />
+                <div class="card-body">
+                  <p class="startup-name">{startup.name}</p>
+                  <p class="startup-description">{startup.description}</p>
+                  <p class="card-return" id={`return-${startup.id}`} aria-live="polite"></p>
+                  <div class="stepper">
+                    <button
+                      type="button"
+                      class="step-btn"
+                      data-action="decrement"
+                      data-index={startup.id - 1}
+                      aria-label={`Decrease allocation for ${startup.name}`}
+                    >
+                      &minus;
+                    </button>
+                    <output for={`slider-${startup.id}`} id={`value-${startup.id}`}>
+                      ${startup.initial.toLocaleString("en-AU")}
+                    </output>
+                    <button
+                      type="button"
+                      class="step-btn"
+                      data-action="increment"
+                      data-index={startup.id - 1}
+                      aria-label={`Increase allocation for ${startup.name}`}
+                    >
+                      &plus;
+                    </button>
+                  </div>
+                  <input
+                    type="range"
+                    id={`slider-${startup.id}`}
+                    name={`slider-${startup.id}`}
+                    data-testid="allocation-slider"
+                    data-index={startup.id - 1}
+                    class="visually-hidden"
+                    tabindex="-1"
+                    aria-hidden="true"
+                    min="0"
+                    max={FUND_TOTAL}
+                    step="10000"
+                    value={startup.initial}
+                  />
+                </div>
               </li>
             ))
           }
@@ -425,7 +387,7 @@ const STRATEGY_EXAMPLE = [
           a power-law model. The diagrams in "How the power law works" above are illustrative
           examples built to show that same shape, not measurements of this run, except the "One
           outlier carries the fund" chart, which switches to your own result once you invest.
-          Startup names, descriptions and icons are fictional, for illustration only.
+          Startup names, descriptions and artwork are fictional, for illustration only.
         </p>
       </details>
     </footer>
@@ -437,7 +399,7 @@ const STRATEGY_EXAMPLE = [
         STARTUP_COUNT,
         STEP,
         STARTUP_NAMES: startups.map((s) => s.name),
-        STARTUP_COLORS: startups.map((s) => ({ bg: s.bg, accent: s.accent })),
+        STARTUP_ACCENTS: startups.map((s) => s.accent),
       }}
     >
       const sliders = Array.from(document.querySelectorAll('[data-testid="allocation-slider"]'));
@@ -513,9 +475,9 @@ const STRATEGY_EXAMPLE = [
       // since a fresh allocation invalidates the last outcome shown.
       function resetCardColors() {
         cards.forEach((card, i) => {
-          card.style.background = STARTUP_COLORS[i].bg;
-          card.style.setProperty("--card-accent", STARTUP_COLORS[i].accent);
+          card.style.setProperty("--card-accent", STARTUP_ACCENTS[i]);
           card.classList.remove("startup-card-outlier");
+          card.querySelector(".card-header").classList.remove("card-header-dimmed");
           cardReturns[i].textContent = "";
         });
         breakdownList.innerHTML = "";
@@ -623,8 +585,12 @@ const STRATEGY_EXAMPLE = [
         cards.forEach((card, i) => {
           cardReturns[i].textContent = `Returned ${multiples[i].toFixed(2)}x`;
           const isOutlier = i === outlierIndex;
+          // Force a reflow so the reveal animation replays even when the same
+          // card wins two draws in a row.
+          card.classList.remove("startup-card-outlier");
+          void card.offsetWidth;
           card.classList.toggle("startup-card-outlier", isOutlier);
-          card.style.background = isOutlier ? "var(--outlier-bg)" : "var(--surface)";
+          card.querySelector(".card-header").classList.toggle("card-header-dimmed", !isOutlier);
           card.style.setProperty("--card-accent", isOutlier ? "var(--outlier-accent)" : "var(--border)");
         });
 
