@@ -101,6 +101,22 @@ the fund was diversified.
    itself, not just a plausible-sounding name
    ([`2dc5be8`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-tejastagra/commit/2dc5be8)).
 
+8. **Swapping per-card line icons for lawsofux.com-style colour blocks** ---
+   the card grid originally used a small stroke icon on a pastel background per
+   startup. Asked to match lawsofux.com's card grid more directly, I replaced
+   the icons with a full-bleed abstract motif (dot grid, circle-and-triangle,
+   stripes, concentric circles) drawn as inline SVG and recoloured per card
+   from a small shared muted palette, rather than hand-authoring 15 bespoke
+   graphics or shipping an external image per card. The post-invest
+   "cards converge, outlier stays distinct" behaviour had to move with it: it
+   now dims the header artwork on every non-outlier card and plays a reveal
+   animation on the outlier's card, instead of recolouring the whole card
+   background as before. Verified with a jsdom script driving repeated
+   randomise-then-submit runs: all 15 cards render a distinct motif/colour
+   pair, exactly 14 headers pick up the dimmed state and 1 card gets the
+   outlier reveal every time, even when the same card wins twice in a row
+   ([`a390818`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-tejastagra/commit/a390818)).
+
 ## Before you ship
 
 `pnpm check:evidence` verifies your citations resolve to real commits, that the
