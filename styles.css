@@ -83,11 +83,11 @@ h1 {
   z-index: 10;
   background: var(--bg);
   padding-bottom: 1.5rem;
+  transform: translateZ(0);
 }
 
 .remaining-bar {
   padding: 0.75rem 0 1rem;
-  border-bottom: 1px solid var(--border);
 }
 
 .remaining-number {
