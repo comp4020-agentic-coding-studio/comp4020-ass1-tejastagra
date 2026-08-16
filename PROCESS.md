@@ -39,6 +39,20 @@ the fund was diversified.
    the sum still landing on exactly $10,000,000 every time
    ([`3ba1222`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-tejastagra/commit/3ba1222)).
 
+3. **Reversing the fixed-sum slider model once it became the headline number**
+   --- the earlier build kept `fund-remaining` at a constant $0 by
+   proportionally rescaling every other slider whenever one moved. That was
+   fine as a small status line, but once the design pass made "remaining" a
+   large sticky headline number, a value that's permanently $0 would read as
+   broken rather than as a feature. I swapped to a clamped countdown instead:
+   each slider's own headroom is its current value plus whatever's
+   unallocated, so remaining genuinely counts down and back up, and submit is
+   disabled with an explicit prompt until it hits exactly $0. Checked with a
+   jsdom script driving real `input` events: raising a slider past its
+   current headroom clamps rather than overshoots, remaining updates and the
+   submit button's `disabled` state flips correctly in both directions
+   ([`6127606`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-tejastagra/commit/6127606)).
+
 ## Before you ship
 
 `pnpm check:evidence` verifies your citations resolve to real commits, that the
