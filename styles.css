@@ -420,8 +420,8 @@ h1 {
 }
 
 .payoff {
-  margin-top: 2.5rem;
-  min-height: 5rem;
+  margin-top: 1.25rem;
+  min-height: 3.5rem;
 }
 
 .payoff-number {
@@ -544,13 +544,13 @@ h1 {
   max-width: 40rem;
   margin: 1.5rem auto 0;
   color: var(--muted);
-  font-size: 0.75rem;
+  font-size: 0.9rem;
   line-height: 1.5;
 }
 
 .explainer {
-  margin-top: 5rem;
-  padding-top: 3rem;
+  margin-top: 2.5rem;
+  padding-top: 2rem;
   border-top: 1px solid var(--border);
   max-width: 42rem;
   margin-left: auto;
@@ -576,11 +576,6 @@ h1 {
   color: var(--text);
   font-size: 1.2rem;
   font-weight: 600;
-}
-
-.explainer-conclusion a {
-  display: inline-block;
-  margin-top: 0.5rem;
 }
 
 .explainer-step {

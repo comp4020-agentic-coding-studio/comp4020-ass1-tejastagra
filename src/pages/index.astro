@@ -361,8 +361,7 @@ const STRATEGY_EXAMPLE = [
         <p class="explainer-conclusion">
           Put together, these three facts are the whole thesis: most bets lose, one outlier
           repays all of them, and no allocation changes that. The only thing left to test is
-          whether it holds for your own split.
-          <a href="#allocator-form">Try the simulator again ↑</a>
+          whether it holds for your own split. <a id="simulator-again-link" href="#allocator-form">Try the simulator again ↑</a>
         </p>
       </section>
     </main>
@@ -372,19 +371,28 @@ const STRATEGY_EXAMPLE = [
         &times;
       </button>
       <p>
-        Enjoyed reading this? The author of this piece,
-        <a href="https://www.linkedin.com/in/tejastagra" target="_blank" rel="noopener noreferrer"
-          >Tejas Tagra</a
-        >, also works in venture capital. Connect with him on
-        <a href="https://www.linkedin.com/in/tejastagra" target="_blank" rel="noopener noreferrer"
-          >LinkedIn</a
+        Enjoyed reading this? The author of this piece, <a
+          href="https://www.linkedin.com/in/tejastagra"
+          target="_blank"
+          rel="noopener noreferrer">Tejas Tagra</a
+        >, also works in venture capital. Connect with him on <a
+          href="https://www.linkedin.com/in/tejastagra"
+          target="_blank"
+          rel="noopener noreferrer">LinkedIn</a
         > for more insights like this.
       </p>
     </aside>
 
+    <p class="disclaimer">
+      <span aria-hidden="true">⚠️</span>
+      This page does not constitute financial, legal or tax advice, and should not be relied upon
+      as a solicitation or offer to invest. It is for educational purposes only. Venture
+      investments carry significant risk.
+    </p>
+
     <footer>
       <details class="info-panel">
-        <summary>About this data</summary>
+        <summary>About the data used in this simulator</summary>
         <p>
           Returns in the simulator above are a modelled Pareto approximation (a mathematical
           shape where a small number of extreme outcomes account for most of the total), not
@@ -392,9 +400,11 @@ const STRATEGY_EXAMPLE = [
           chance of a 10x+ outlier, broadly matching the aggregate pattern Correlation Ventures
           found across roughly 21,000 US venture financings from 2004 to 2013: around
           two-thirds returned less than the capital invested, and only around 4% returned more
-          than 10 times the money. See
-          <a href="https://arxiv.org/pdf/2303.11013" target="_blank" rel="noopener noreferrer">
-            Awate, "Power-Law Distribution in Venture Capital Returns" (arXiv, 2023)</a>, which
+          than 10 times the money. See <a
+            href="https://arxiv.org/pdf/2303.11013"
+            target="_blank"
+            rel="noopener noreferrer">Awate, "Power-Law Distribution in Venture Capital Returns" (arXiv, 2023)</a
+          >, which
           cites the original Correlation Ventures studies and uses the same shape to parameterise
           a power-law model. The diagrams in "How the power law works" above are illustrative
           examples built to show that same shape, not measurements of this run, except the "One
@@ -403,13 +413,6 @@ const STRATEGY_EXAMPLE = [
         </p>
       </details>
     </footer>
-
-    <p class="disclaimer">
-      <span aria-hidden="true">⚠️</span>
-      This page does not constitute financial, legal or tax advice, and should not be relied upon
-      as a solicitation or offer to invest. It is for educational purposes only. Venture
-      investments carry significant risk.
-    </p>
 
     <script
       is:inline
@@ -444,6 +447,17 @@ const STRATEGY_EXAMPLE = [
       const randomiseButton = document.getElementById("randomise-button");
       const feeToggle = document.getElementById("fee-info-toggle");
       const feeInfo = document.getElementById("fee-info");
+
+      // Snapshot of the illustrative "one outlier carries the fund" and
+      // "diversifying does not change this" diagrams before any submission,
+      // so a reset can put them back exactly as first rendered rather than
+      // leaving the last live draw's numbers on screen.
+      const contributionChartInitialHTML = contributionChart.innerHTML;
+      const contributionCaptionInitialText = contributionCaption.textContent;
+      const strategyFillHeights = strategyFills.map((fill) => fill.style.height);
+      const strategyValueTexts = strategyValues.map((el) => el.textContent);
+      const strategyLabel2InitialText = strategyLabel2.textContent;
+      const strategyCaptionInitialText = strategyCaption.textContent;
 
       let allocations = sliders.map((slider) => Number(slider.value));
 
@@ -1016,11 +1030,38 @@ const STRATEGY_EXAMPLE = [
         });
       });
 
-      const resetButton = document.getElementById("reset-button");
-      resetButton.addEventListener("click", () => {
+      // Puts the whole simulator back to its pre-submission state: every
+      // slider at $0, the payoff/bubble-chart panels cleared, and the two
+      // explainer diagrams that swap to live results back to their
+      // illustrative examples. Shared by the Reset button and the "Try the
+      // simulator again" link so both fully reset the same way.
+      function resetSimulator() {
         allocations = allocations.map(() => 0);
         resetCardColors();
         render();
+        contributionChart.innerHTML = contributionChartInitialHTML;
+        contributionCaption.textContent = contributionCaptionInitialText;
+        strategyFills.forEach((fill, i) => {
+          fill.style.height = strategyFillHeights[i];
+        });
+        strategyValues.forEach((el, i) => {
+          el.textContent = strategyValueTexts[i];
+        });
+        strategyLabel2.textContent = strategyLabel2InitialText;
+        strategyCaption.textContent = strategyCaptionInitialText;
+      }
+
+      const resetButton = document.getElementById("reset-button");
+      resetButton.addEventListener("click", resetSimulator);
+
+      const simulatorAgainLink = document.getElementById("simulator-again-link");
+      simulatorAgainLink.addEventListener("click", (event) => {
+        event.preventDefault();
+        resetSimulator();
+        document.getElementById("allocator-form").scrollIntoView({
+          behavior: bubblesReduceMotion ? "auto" : "smooth",
+          block: "start",
+        });
       });
 
       randomiseButton.addEventListener("click", () => {
