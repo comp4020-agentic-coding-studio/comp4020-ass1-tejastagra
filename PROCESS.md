@@ -196,6 +196,57 @@ the fund was diversified.
     physics solve
     ([`0bbacfe`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-tejastagra/commit/0bbacfe)).
 
+13. **Discovering the Reset button itself didn't fully reset** --- asked to
+    make the closing "Try the simulator again" link behave like the existing
+    Reset button, then scroll back up, I first checked what Reset actually
+    restored rather than assuming it was already correct. `resetCardColors()`
+    cleared the bubble chart and the per-card results, but never touched the
+    two explainer diagrams that swap to live results on submit ("One outlier
+    carries the fund" and "diversifying does not change this"), so either
+    button would have left a stale draw showing after a reset. Rather than
+    wire the link to the incomplete behaviour, I snapshotted both diagrams'
+    original illustrative state on page load, pulled the reset logic into one
+    `resetSimulator()` function extended to restore that snapshot, and had
+    both the Reset button and the new link call it. Verified with a jsdom
+    script driving a real submit then a real click on the link: fund return,
+    remaining, submit's disabled state, both diagrams' captions/values and the
+    bubble chart all landed back at their pre-submission values, and
+    `scrollIntoView` fired
+    ([`e9422f5`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-tejastagra/commit/e9422f5)).
+
+14. **Finding the same missing-space-before-link bug in three separate spots**
+    --- told about one instance (the author panel reading "piece,Tejas
+    Tagra"), I traced it to an Astro/JSX-style whitespace-elision pattern used
+    throughout the file, where a text node ending right before a line-broken
+    `<a>` tag loses its trailing space at compile time. Rather than patch that
+    one spot, I grepped every `<a` in the page and checked each one's built
+    output text, which turned up the same bug in the closing explainer
+    paragraph and the footer's arXiv citation. Fixed all three by keeping the
+    space in the same text node as the tag rather than across a line break,
+    confirmed by grepping the built `dist/index.html` for the exact phrases
+    ([`e9422f5`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-tejastagra/commit/e9422f5)).
+
+15. **Adding a height fit alongside the existing width fit, after the overflow
+    bug resurfaced** --- the bubble chart's cluster-scaling step only ever fit
+    the pack to the container's width, so an extreme draw (a 100x+ outlier)
+    could pack into a cluster tall enough that the dominant circle filled the
+    whole visible chart, with the rest scrolled out of view below it. Since
+    this exact overflow had supposedly been fixed once already
+    ([`e3545b8`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-tejastagra/commit/e3545b8)),
+    I didn't trust a visual check alone this time: I forced the draw's
+    Pareto tail branch in a jsdom script (monkey-patching `Math.random` so the
+    outlier hits close to its 300x cap) at both marking viewports before
+    touching any code, to see the bug reproduce concretely rather than assume
+    the report was accurate. The fix adds one more uniform shrink pass, after
+    the existing width fit, that scales the whole cluster down to a hard
+    height ceiling (a fraction of the viewport height) whenever the packed
+    height would exceed it, plus a CSS `max-height`/`overflow: hidden`
+    backstop on the container itself as the "no matter what" ceiling the
+    brief asked for. Re-running the same forced-outlier script confirmed the
+    viewBox height now sits at or under the cap at both viewports, with a
+    normal (non-extreme) draw unaffected
+    ([`7b30cc7`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-tejastagra/commit/7b30cc7)).
+
 ## Before you ship
 
 `pnpm check:evidence` verifies your citations resolve to real commits, that the
