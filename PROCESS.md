@@ -5,8 +5,8 @@ essay about it.
 
 ## What I built
 
-The power law allocator: a visitor splits a fixed $10M fund across 20
-startups with sliders, then draws simulated returns for each and sees the
+The power law allocator: a visitor splits a fixed $10M fund across 15
+startups with steppers, then draws simulated returns for each and sees the
 resulting fund multiple. Re-running the draw with a different split shows the
 outcome is dominated by whichever startup happens to hit the tail, not by how
 the fund was diversified.
@@ -77,6 +77,29 @@ the fund was diversified.
    drives a real submit and checks the top of the ranked list matches the
    highlighted card
    ([`72815d6`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-tejastagra/commit/72815d6)).
+
+6. **Making the "one outlier carries the fund" diagram live instead of static**
+   --- every explainer diagram until now was a fixed illustrative example,
+   deliberately kept separate from the real simulation to protect the
+   data-integrity rule. When asked to make this specific diagram reflect the
+   visitor's actual result, I judged it was safe to break that separation only
+   for this one chart, because it now computes directly from the same
+   allocation and multiple values the live draw already produced (dollar
+   return per startup, sorted descending), rather than introducing any new
+   or fabricated figures. The other two explainer diagrams stay static and
+   labelled illustrative. Verified with a jsdom script driving a real
+   randomise-then-submit and checking the caption text and bar count update
+   to match the 15 startups
+   ([`2dc5be8`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-tejastagra/commit/2dc5be8)).
+
+7. **Replacing an unsourced citation with a traceable one** --- the footer
+   named "Correlation Ventures" without a link, which is a name-drop rather
+   than a citation a reader can check. I searched for and added a real,
+   checkable secondary source (an arXiv paper that itself cites the original
+   Correlation Ventures studies with figures) rather than leaving a bare
+   attribution, since the data-integrity rule asks for a citation in the app
+   itself, not just a plausible-sounding name
+   ([`2dc5be8`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-tejastagra/commit/2dc5be8)).
 
 ## Before you ship
 
