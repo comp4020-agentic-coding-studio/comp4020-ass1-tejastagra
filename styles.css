@@ -90,9 +90,6 @@ h1 {
 }
 
 .remaining-bar {
-  position: sticky;
-  top: 0;
-  z-index: 10;
   background: var(--bg);
   padding: 0.75rem 0 1rem;
   margin-bottom: 1.5rem;

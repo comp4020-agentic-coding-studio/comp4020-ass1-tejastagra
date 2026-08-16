@@ -406,6 +406,7 @@ const STRATEGY_EXAMPLE = [
       const outputs = sliders.map((slider) => document.getElementById(`value-${slider.id.split("-")[1]}`));
       const cards = Array.from(document.querySelectorAll(".startup-card"));
       const cardReturns = sliders.map((slider) => document.getElementById(`return-${slider.id.split("-")[1]}`));
+      const remainingBar = document.querySelector(".remaining-bar");
       const remainingEl = document.querySelector('[data-testid="fund-remaining"]');
       const promptEl = document.querySelector(".allocation-prompt");
       const submitButton = document.querySelector('[data-testid="allocate-submit"]');
@@ -474,6 +475,7 @@ const STRATEGY_EXAMPLE = [
       // Gives each card back its own colour and clears the last draw's result,
       // since a fresh allocation invalidates the last outcome shown.
       function resetCardColors() {
+        remainingBar.hidden = false;
         cards.forEach((card, i) => {
           card.style.setProperty("--card-accent", STARTUP_ACCENTS[i]);
           card.classList.remove("startup-card-outlier");
@@ -554,6 +556,8 @@ const STRATEGY_EXAMPLE = [
       form.addEventListener("submit", (event) => {
         event.preventDefault();
         if (remaining() !== 0) return;
+
+        remainingBar.hidden = true;
 
         // The same draw is applied to the visitor's split and to two
         // reference strategies, so the comparison isolates the effect of
