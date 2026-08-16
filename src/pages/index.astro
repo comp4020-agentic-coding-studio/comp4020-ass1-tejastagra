@@ -327,11 +327,11 @@ const STRATEGY_EXAMPLE = [
           <div class="explainer-text">
             <h3>Diversifying does not change this</h3>
             <p>
-              Spread your money evenly, concentrate it in one bet, or split it any other way:
-              once the outlier lands, the fund's overall multiple ends up close to the same
-              number regardless. This example shows one illustrative draw applied to three
-              different allocations. Use the simulator above to see it happen with your own
-              numbers.
+              A random concentrated bet, an even split, or a typical mixed split: once the
+              outlier lands, realistic strategies all end up in a similar range, because none
+              of them could have known the outlier in advance. This example shows one
+              illustrative draw applied to three different allocations. Use the simulator above
+              to see it happen with your own numbers.
             </p>
             <p>
               The reason is not that diversifying is pointless, it is that no allocation can
@@ -1174,7 +1174,12 @@ const STRATEGY_EXAMPLE = [
         // allocation shape rather than re-rolling the outcome.
         const multiples = allocations.map(() => drawMultiple());
         const evenAmounts = allocations.map(() => FUND_TOTAL / allocations.length);
-        const concentratedAmounts = allocations.map((_, i) => (i === 0 ? FUND_TOTAL : 0));
+        // "One concentrated bet" invests the full fund in a randomly picked startup, since a
+        // real concentrated bet is placed without knowing in advance which one will be the
+        // outlier. Picked fresh each draw so it isn't always the same company.
+        const outlierIndex = multiples.indexOf(Math.max(...multiples));
+        const concentratedIndex = Math.floor(Math.random() * allocations.length);
+        const concentratedAmounts = allocations.map((_, i) => (i === concentratedIndex ? FUND_TOTAL : 0));
 
         const yourMultiple = fundMultiple(allocations, multiples);
         const evenMultiple = fundMultiple(evenAmounts, multiples);
@@ -1194,7 +1199,6 @@ const STRATEGY_EXAMPLE = [
         // Cards converge to the same neutral colour once allocated, since the
         // point is that the split itself doesn't set the outcome apart, only
         // the outlier does — so only that one card stays distinct.
-        const outlierIndex = multiples.indexOf(Math.max(...multiples));
         cards.forEach((card, i) => {
           cardReturns[i].textContent = `Returned ${multiples[i].toFixed(2)}x`;
           const isOutlier = i === outlierIndex;
@@ -1257,7 +1261,14 @@ const STRATEGY_EXAMPLE = [
       const tailValues = Array.from(document.querySelectorAll("[data-bucket-value]"));
 
       function tailBuckets(t) {
-        return [65 - 30 * t, 25 - 5 * t, 7, 3 + 35 * t];
+        // As the tail gets heavier, mass moves out of every non-tail bucket and into the
+        // extreme-tail bucket. The tail bucket is derived from the other three (rather than
+        // given its own fixed formula) so the four always sum to exactly 100.
+        const lossBreakeven = 65 - 30 * t;
+        const modest = 25 - 5 * t;
+        const strong = 7 - 2 * t;
+        const tail = 100 - lossBreakeven - modest - strong;
+        return [lossBreakeven, modest, strong, tail];
       }
 
       function updateTailSlider() {
