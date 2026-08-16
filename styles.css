@@ -8,6 +8,7 @@
   --border: #e6e2d8;
   --outlier-bg: #e9f9ee;
   --outlier-accent: #2f9e55;
+  --danger: #c92a2a;
 }
 
 body {
@@ -309,6 +310,26 @@ h1 {
 
 .randomise-button:hover {
   background: var(--bg);
+}
+
+#reset-button {
+  border-color: rgb(201 42 42 / 35%);
+  background: rgb(201 42 42 / 8%);
+  color: var(--danger);
+}
+
+#reset-button:hover {
+  background: rgb(201 42 42 / 14%);
+}
+
+#randomise-button {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--surface);
+}
+
+#randomise-button:hover {
+  background: #0a54e0;
 }
 
 .info-toggle {
