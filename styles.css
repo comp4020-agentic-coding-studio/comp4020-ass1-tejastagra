@@ -402,6 +402,9 @@ h1 {
   margin-top: 5rem;
   padding-top: 3rem;
   border-top: 1px solid var(--border);
+  max-width: 42rem;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .explainer h2 {
@@ -410,7 +413,6 @@ h1 {
 }
 
 .explainer-intro {
-  max-width: 56rem;
   color: var(--muted);
   font-size: 1.15rem;
   margin: -1.5rem 0 1.5rem;
@@ -421,7 +423,6 @@ h1 {
 }
 
 .explainer-conclusion {
-  max-width: 56rem;
   color: var(--text);
   font-size: 1.2rem;
   font-weight: 600;
@@ -434,10 +435,6 @@ h1 {
 
 .explainer-step {
   margin-bottom: 5rem;
-}
-
-.explainer-text {
-  max-width: 56rem;
 }
 
 .explainer-step:last-child {
@@ -456,7 +453,6 @@ h1 {
 }
 
 .explainer-diagram {
-  max-width: 56rem;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 1rem;
