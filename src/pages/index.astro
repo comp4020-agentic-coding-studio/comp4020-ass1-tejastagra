@@ -4,35 +4,144 @@ import "../../styles.css";
 const RAISED_TOTAL = 12_500_000;
 const FUND_TOTAL = 10_000_000;
 const STARTUP_COUNT = 15;
-const STEP = 250_000;
+const STEP = 100_000;
 
-const BASE_SHARE = Math.floor(FUND_TOTAL / STARTUP_COUNT);
-const REMAINDER = FUND_TOTAL - BASE_SHARE * STARTUP_COUNT;
+const ICON_STROKE = 'fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"';
 
 const STARTUP_INFO = [
-  { name: "Orbital Analytics", description: "Satellite imagery for crop insurers" },
-  { name: "Loopwave", description: "Recycled battery chemistry for EVs" },
-  { name: "Fernway Health", description: "Remote diagnostics for rural clinics" },
-  { name: "Cursive AI", description: "Handwriting-to-text for legal filings" },
-  { name: "Driftline", description: "Autonomous freight barges" },
-  { name: "Solstice Grid", description: "Community solar microgrids" },
-  { name: "Nomad Labs", description: "Modular housing for disaster relief" },
-  { name: "Verdant Foods", description: "Lab-grown fibre for meat alternatives" },
-  { name: "Pathwell", description: "Mental health triage chatbot" },
-  { name: "Anchor Robotics", description: "Warehouse picking robots" },
-  { name: "Cinderpoint", description: "Wildfire early-detection sensors" },
-  { name: "Marrow Bio", description: "Bone marrow donor matching platform" },
-  { name: "Tallyworks", description: "Small business bookkeeping automation" },
-  { name: "Skyloom", description: "Drone-based crop spraying" },
-  { name: "Undertone", description: "Noise-cancelling hearing aids" },
+  {
+    name: "Orbital Analytics",
+    description: "Satellite imagery for crop insurers",
+    icon: `<circle cx="12" cy="12" r="3.5" ${ICON_STROKE}/><ellipse cx="12" cy="12" rx="10" ry="4" ${ICON_STROKE}/>`,
+    bg: "#eaf1ff",
+    accent: "#2f5fd8",
+  },
+  {
+    name: "Loopwave",
+    description: "Recycled battery chemistry for EVs",
+    icon: `<rect x="2" y="8" width="17" height="8" rx="2" ${ICON_STROKE}/><rect x="19" y="10.5" width="2" height="3" ${ICON_STROKE}/><path d="M11 9 L8.5 13 H12 L9.5 17" ${ICON_STROKE}/>`,
+    bg: "#e9faf0",
+    accent: "#1f9d55",
+  },
+  {
+    name: "Fernway Health",
+    description: "Remote diagnostics for rural clinics",
+    icon: `<path d="M12 20 C4 14 3 9 6.5 6.5 C9 4.7 12 6 12 9 C12 6 15 4.7 17.5 6.5 C21 9 20 14 12 20 Z" ${ICON_STROKE}/><path d="M4 13 H9 L10.5 10 L12.5 16 L14 13 H20" ${ICON_STROKE}/>`,
+    bg: "#fdeeee",
+    accent: "#d8425f",
+  },
+  {
+    name: "Cursive AI",
+    description: "Handwriting-to-text for legal filings",
+    icon: `<path d="M3 16 Q6 6 9 16 T15 16 T21 8" ${ICON_STROKE}/>`,
+    bg: "#f3edff",
+    accent: "#7c3fd8",
+  },
+  {
+    name: "Driftline",
+    description: "Autonomous freight barges",
+    icon: `<path d="M2 16 H22 L19 20 H5 Z" ${ICON_STROKE}/><line x1="12" y1="16" x2="12" y2="5" ${ICON_STROKE}/><path d="M12 6 L18 10 H12 Z" ${ICON_STROKE}/>`,
+    bg: "#e8f6fa",
+    accent: "#1a8fa3",
+  },
+  {
+    name: "Solstice Grid",
+    description: "Community solar microgrids",
+    icon: `<circle cx="12" cy="12" r="4" ${ICON_STROKE}/><g ${ICON_STROKE}><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="4.9" y1="4.9" x2="7" y2="7"/><line x1="17" y1="17" x2="19.1" y2="19.1"/><line x1="19.1" y1="4.9" x2="17" y2="7"/><line x1="7" y1="17" x2="4.9" y2="19.1"/></g>`,
+    bg: "#fff7e0",
+    accent: "#c98a12",
+  },
+  {
+    name: "Nomad Labs",
+    description: "Modular housing for disaster relief",
+    icon: `<path d="M4 12 L12 4 L20 12 V20 H4 Z" ${ICON_STROKE}/><line x1="12" y1="14" x2="12" y2="20" ${ICON_STROKE}/>`,
+    bg: "#f1ede4",
+    accent: "#8a6d3b",
+  },
+  {
+    name: "Verdant Foods",
+    description: "Lab-grown fibre for meat alternatives",
+    icon: `<path d="M12 3 C6 3 3 9 3 16 C10 16 16 12 16 6 C16 4.5 14.5 3 12 3 Z" ${ICON_STROKE}/><line x1="4" y1="20" x2="14" y2="8" ${ICON_STROKE}/>`,
+    bg: "#eaf9ee",
+    accent: "#2f8f4e",
+  },
+  {
+    name: "Pathwell",
+    description: "Mental health triage chatbot",
+    icon: `<rect x="3" y="4" width="18" height="12" rx="3" ${ICON_STROKE}/><path d="M8 16 L6 20 L11 16 Z" ${ICON_STROKE}/>`,
+    bg: "#eef2ff",
+    accent: "#3f5fbf",
+  },
+  {
+    name: "Anchor Robotics",
+    description: "Warehouse picking robots",
+    icon: `<circle cx="5" cy="19" r="2" ${ICON_STROKE}/><line x1="5" y1="17" x2="5" y2="10" ${ICON_STROKE}/><line x1="5" y1="10" x2="15" y2="10" ${ICON_STROKE}/><line x1="15" y1="10" x2="15" y2="5" ${ICON_STROKE}/><circle cx="15" cy="5" r="2" ${ICON_STROKE}/>`,
+    bg: "#ecf0f3",
+    accent: "#445566",
+  },
+  {
+    name: "Cinderpoint",
+    description: "Wildfire early-detection sensors",
+    icon: `<path d="M12 2 C8 8 6 11 6 14 a6 6 0 0 0 12 0 c0 -3 -2 -6 -6 -12 Z" ${ICON_STROKE}/>`,
+    bg: "#fdefe9",
+    accent: "#d1552b",
+  },
+  {
+    name: "Marrow Bio",
+    description: "Bone marrow donor matching platform",
+    icon: `<path d="M6 3 C10 7 6 9 6 12 C6 15 10 17 6 21" ${ICON_STROKE}/><path d="M18 3 C14 7 18 9 18 12 C18 15 14 17 18 21" ${ICON_STROKE}/><line x1="7" y1="7" x2="17" y2="7" ${ICON_STROKE}/><line x1="7" y1="17" x2="17" y2="17" ${ICON_STROKE}/>`,
+    bg: "#fcedf4",
+    accent: "#b83b74",
+  },
+  {
+    name: "Tallyworks",
+    description: "Small business bookkeeping automation",
+    icon: `<line x1="3" y1="21" x2="21" y2="21" ${ICON_STROKE}/><rect x="5" y="14" width="4" height="7" ${ICON_STROKE}/><rect x="10.5" y="9" width="4" height="12" ${ICON_STROKE}/><rect x="16" y="4" width="4" height="17" ${ICON_STROKE}/>`,
+    bg: "#f2f7e9",
+    accent: "#5a7d2b",
+  },
+  {
+    name: "Skyloom",
+    description: "Drone-based crop spraying",
+    icon: `<circle cx="12" cy="12" r="2" ${ICON_STROKE}/><g ${ICON_STROKE}><line x1="12" y1="12" x2="5" y2="5"/><circle cx="5" cy="5" r="2"/><line x1="12" y1="12" x2="19" y2="5"/><circle cx="19" cy="5" r="2"/><line x1="12" y1="12" x2="5" y2="19"/><circle cx="5" cy="19" r="2"/><line x1="12" y1="12" x2="19" y2="19"/><circle cx="19" cy="19" r="2"/></g>`,
+    bg: "#eaf6ff",
+    accent: "#1b7fc4",
+  },
+  {
+    name: "Undertone",
+    description: "Noise-cancelling hearing aids",
+    icon: `<path d="M4 13 a8 8 0 0 1 16 0" ${ICON_STROKE}/><path d="M7 13 a5 5 0 0 1 10 0" ${ICON_STROKE}/><circle cx="12" cy="14" r="1.5" ${ICON_STROKE}/>`,
+    bg: "#f5eefb",
+    accent: "#6a4a9c",
+  },
 ];
 
 const startups = STARTUP_INFO.slice(0, STARTUP_COUNT).map((info, i) => ({
   id: i + 1,
   name: info.name,
   description: info.description,
-  initial: BASE_SHARE + (i < REMAINDER ? 1 : 0),
+  icon: info.icon,
+  bg: info.bg,
+  accent: info.accent,
+  initial: 0,
 }));
+
+// Illustrative diagrams for the explainer section below: static example
+// figures that show the shape of the power law, not live simulation output.
+const OUTCOME_BUCKETS = [
+  { label: "0 to 1x", value: 65 },
+  { label: "1 to 5x", value: 25 },
+  { label: "5 to 10x", value: 7 },
+  { label: "10x or more", value: 3 },
+];
+
+const CONTRIBUTION_EXAMPLE = [78, 9, 5, 3, 2, 1, 1, 1, 1, 1, 1, 1];
+
+const STRATEGY_EXAMPLE = [
+  { label: "One concentrated bet", value: 1.3 },
+  { label: "Even split", value: 1.2 },
+  { label: "A typical mixed split", value: 1.1 },
+];
 ---
 
 <!doctype html>
@@ -51,10 +160,10 @@ const startups = STARTUP_INFO.slice(0, STARTUP_COUNT).map((info, i) => ({
     <main>
       <h1>The power law allocator</h1>
       <p class="framing">
-        This fund raised ${RAISED_TOTAL.toLocaleString("en-AU")}. About 20% goes to management
-        fees over its life, leaving <strong data-testid="fund-total">${FUND_TOTAL.toLocaleString("en-AU")}</strong>
-        to invest across {STARTUP_COUNT} startups. However you divide it, one outlier decides
-        almost all of the return.
+        This fund raised ${RAISED_TOTAL.toLocaleString("en-AU")}. Fees take about 20% over its
+        life. That leaves <strong data-testid="fund-total">${FUND_TOTAL.toLocaleString("en-AU")}</strong> to
+        invest in {STARTUP_COUNT} startups. However you split it, one outlier decides almost all
+        of your return.
         <button type="button" class="info-toggle" id="fee-info-toggle" aria-expanded="false" aria-controls="fee-info">
           Why only 80%?
         </button>
@@ -70,18 +179,25 @@ const startups = STARTUP_INFO.slice(0, STARTUP_COUNT).map((info, i) => ({
       </div>
 
       <div class="remaining-bar">
-        <p data-testid="fund-remaining" aria-live="polite" class="remaining-number">Remaining: $0</p>
-        <p class="allocation-prompt" aria-live="polite"></p>
+        <p data-testid="fund-remaining" aria-live="polite" class="remaining-number">
+          Remaining: ${FUND_TOTAL.toLocaleString("en-AU")}
+        </p>
+        <p class="allocation-prompt" aria-live="polite">
+          Allocate the full ${FUND_TOTAL.toLocaleString("en-AU")} to continue.
+        </p>
       </div>
 
       <form id="allocator-form">
         <div class="grid-controls">
-          <button type="button" id="randomise-button" class="randomise-button">Randomise allocation</button>
+          <button type="button" id="randomise-button" class="randomise-button">
+            Randomise: invest all ${FUND_TOTAL.toLocaleString("en-AU")}
+          </button>
         </div>
         <ul class="startup-grid">
           {
             startups.map((startup) => (
-              <li class="startup-card">
+              <li class="startup-card" style={`background:${startup.bg}; --card-accent:${startup.accent};`}>
+                <div class="startup-icon" aria-hidden="true" set:html={`<svg viewBox="0 0 24 24">${startup.icon}</svg>`} />
                 <p class="startup-name">{startup.name}</p>
                 <p class="startup-description">{startup.description}</p>
                 <div class="stepper">
@@ -133,17 +249,102 @@ const startups = STARTUP_INFO.slice(0, STARTUP_COUNT).map((info, i) => ({
         <p data-testid="fund-return" class="payoff-number" aria-live="polite"></p>
         <p class="payoff-compare"></p>
       </section>
+
+      <section class="explainer">
+        <h2>How the power law works</h2>
+
+        <div class="explainer-step">
+          <div class="explainer-text">
+            <h3>Most bets return less than they cost</h3>
+            <p>
+              Across a large number of venture deals, most return less than the money put in.
+              A modest share do well. Only a small slice return ten times or more. The chart
+              below is an illustrative example of that shape, not this run's result.
+            </p>
+          </div>
+          <div class="explainer-diagram">
+            <div class="bar-chart">
+              {
+                OUTCOME_BUCKETS.map((bucket) => (
+                  <div class="bar-chart-item">
+                    <div class="bar-chart-track">
+                      <div class="bar-chart-fill" style={`height:${bucket.value}%;`} />
+                    </div>
+                    <p class="bar-chart-label">{bucket.label}</p>
+                    <p class="bar-chart-value">{bucket.value}%</p>
+                  </div>
+                ))
+              }
+            </div>
+          </div>
+        </div>
+
+        <div class="explainer-step">
+          <div class="explainer-text">
+            <h3>One outlier carries the fund</h3>
+            <p>
+              Rank a fund's startups by how much they contribute to the total return. In a
+              typical outcome, one of them accounts for most of it and the rest barely
+              register. This example ranks twelve startups by contribution.
+            </p>
+          </div>
+          <div class="explainer-diagram">
+            <div class="bar-chart bar-chart-tight">
+              {
+                CONTRIBUTION_EXAMPLE.map((value) => (
+                  <div class="bar-chart-item">
+                    <div class="bar-chart-track">
+                      <div class="bar-chart-fill" style={`height:${value}%;`} />
+                    </div>
+                  </div>
+                ))
+              }
+            </div>
+            <p class="bar-chart-caption">Share of total fund return, by startup rank</p>
+          </div>
+        </div>
+
+        <div class="explainer-step">
+          <div class="explainer-text">
+            <h3>Diversifying does not change this</h3>
+            <p>
+              Spread your money evenly, concentrate it in one bet, or split it any other way:
+              once the outlier lands, the fund's overall multiple ends up close to the same
+              number regardless. This example shows one illustrative draw applied to three
+              different allocations. Use the allocator above to see it happen with your own
+              numbers.
+            </p>
+          </div>
+          <div class="explainer-diagram">
+            <div class="bar-chart bar-chart-wide">
+              {
+                STRATEGY_EXAMPLE.map((strategy) => (
+                  <div class="bar-chart-item">
+                    <div class="bar-chart-track">
+                      <div class="bar-chart-fill" style={`height:${(strategy.value / 1.5) * 100}%;`} />
+                    </div>
+                    <p class="bar-chart-label">{strategy.label}</p>
+                    <p class="bar-chart-value">{strategy.value.toFixed(1)}x</p>
+                  </div>
+                ))
+              }
+            </div>
+          </div>
+        </div>
+      </section>
     </main>
 
     <footer>
       <details class="info-panel">
         <summary>About this data</summary>
         <p>
-          Returns are a modelled Pareto approximation, not real fund or startup data. Parameters
-          are set so most outcomes land near or below 1x with a small chance of a 10x+ outlier,
-          broadly matching the aggregate pattern in Correlation Ventures' venture outcomes
-          analysis (around two-thirds of financings return below 1x; a small share return 10x
-          or more). Startup names and descriptions are fictional, for illustration only.
+          Returns in the allocator above are a modelled Pareto approximation, not real fund or
+          startup data. Parameters are set so most outcomes land near or below 1x with a small
+          chance of a 10x+ outlier, broadly matching the aggregate pattern in Correlation
+          Ventures' venture outcomes analysis (around two-thirds of financings return below 1x;
+          a small share return 10x or more). The diagrams in "How the power law works" above are
+          illustrative examples built to show that same shape, not measurements of this run.
+          Startup names, descriptions and icons are fictional, for illustration only.
         </p>
       </details>
     </footer>

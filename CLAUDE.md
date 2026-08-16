@@ -207,12 +207,29 @@ Do not add:
 
 ## Visual style reference
 
-Reference: lawsofux.com. Do not copy its design language, its card-grid-of-laws layout, its content, or its dark colour scheme. Use a light background instead. Match the general feel otherwise:
+Reference: lawsofux.com. Large, visually distinct cards are explicitly wanted:
+each startup card can carry its own accent colour and a distinct piece of
+artwork/icon treatment, in the spirit of lawsofux's card grid. Use a light
+background overall rather than lawsofux's dark scheme. Otherwise match the
+general feel:
 
-- Light background, restrained and high contrast, not stark white with no depth.
-- Typography does the heavy lifting, generous whitespace, no unnecessary chrome or decoration.
-- Minimal nav, minimal UI furniture, let the one interaction and the data be the whole page.
-- Clean sans-serif throughout, no default browser styling left untouched (no unstyled sliders, buttons, or inputs).
+- Light background overall, restrained and high contrast, not stark white with
+  no depth. Individual cards may carry their own accent colour.
+- Typography does the heavy lifting, generous whitespace, no unnecessary chrome
+  or decoration beyond the per-card colour/artwork.
+- Minimal nav, minimal UI furniture, let the interaction and the data be the
+  main focus.
+- Clean sans-serif throughout, no default browser styling left untouched (no
+  unstyled sliders, buttons, or inputs).
+- Use the full width of the viewport rather than a narrow centred column.
+
+Second reference for the explanatory section: ciechanow.ski/mechanical-watch —
+a long-form, plain-language explainer with simple diagrams that build up an
+idea step by step. The power-law explanation section may take this
+scrollytelling shape: several short sections, each with a small diagram or
+chart, building up how a fat tail dominates a portfolio's return. Keep the
+copy itself plain and in this file's "Style" voice; only the structure and
+diagram-led pacing is inspired by ciechanow.ski.
 
 If a design decision is ambiguous, check with me before picking a direction (see "Check in with me" above).
 
