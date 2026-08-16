@@ -168,6 +168,9 @@ const STRATEGY_EXAMPLE = [
         over. This page walks through how that actually plays out. You play fund manager: split
         a fixed pool of money across {STARTUP_COUNT} startups, then see what comes back.
       </p>
+      <p class="skip-link">
+        New to venture investing? <a href="#explainer">Read how the power law works first ↓</a>
+      </p>
       <p class="framing">
         This fund raised ${RAISED_TOTAL.toLocaleString("en-AU")}. Fees take about 20% over its
         life. That leaves <strong data-testid="fund-total">${FUND_TOTAL.toLocaleString("en-AU")}</strong> to
@@ -198,6 +201,7 @@ const STRATEGY_EXAMPLE = [
 
       <form id="allocator-form">
         <div class="grid-controls">
+          <button type="button" id="reset-button" class="randomise-button">Reset</button>
           <button type="button" id="randomise-button" class="randomise-button">
             Randomise: invest all ${FUND_TOTAL.toLocaleString("en-AU")}
           </button>
@@ -269,13 +273,20 @@ const STRATEGY_EXAMPLE = [
         <ol class="breakdown-list" id="breakdown-list"></ol>
       </section>
 
-      <section class="explainer">
+      <section class="explainer" id="explainer">
         <h2>How the power law works</h2>
         <p class="explainer-intro">
           A "return multiple" is what a fund gets back for every dollar it invests: a 2x means
           the money doubled, a 0.3x means most of it was lost. A "power law" here just means
           that a few results are enormously bigger than all the rest put together, rather than
           outcomes clustering around an average. Venture funds live and die by that one fact.
+        </p>
+        <p class="explainer-intro">
+          When you click "Invest" in the allocator above, the site does "the draw": it randomly
+          picks a return multiple for each startup from a distribution shaped like the one below,
+          then adds up what your money invested in each one turned into. That is what produces
+          the fund return you see, and it is why the same allocation can turn out very
+          differently each time you invest.
         </p>
 
         <div class="explainer-step">
@@ -371,21 +382,29 @@ const STRATEGY_EXAMPLE = [
             </p>
           </div>
           <div class="explainer-diagram">
-            <div class="bar-chart bar-chart-wide">
+            <div class="bar-chart bar-chart-wide" id="strategy-chart">
               {
-                STRATEGY_EXAMPLE.map((strategy) => (
+                STRATEGY_EXAMPLE.map((strategy, i) => (
                   <div class="bar-chart-item">
                     <div class="bar-chart-track">
-                      <div class="bar-chart-fill" style={`height:${(strategy.value / 1.5) * 100}%;`} />
+                      <div class="bar-chart-fill" data-strategy={i} style={`height:${(strategy.value / 1.5) * 100}%;`} />
                     </div>
-                    <p class="bar-chart-label">{strategy.label}</p>
-                    <p class="bar-chart-value">{strategy.value.toFixed(1)}x</p>
+                    <p class="bar-chart-label" id={`strategy-label-${i}`}>{strategy.label}</p>
+                    <p class="bar-chart-value" data-strategy-value={i}>{strategy.value.toFixed(1)}x</p>
                   </div>
                 ))
               }
             </div>
+            <p class="bar-chart-caption" id="strategy-chart-caption">One illustrative draw applied to three allocations</p>
           </div>
         </div>
+
+        <p class="explainer-conclusion">
+          Put together, these three facts are the whole thesis: most bets lose, one outlier
+          repays all of them, and no allocation changes that. The only thing left to test is
+          whether it holds for your own split.
+          <a href="#allocator-form">Try the allocator again ↑</a>
+        </p>
       </section>
     </main>
 
@@ -393,8 +412,9 @@ const STRATEGY_EXAMPLE = [
       <details class="info-panel">
         <summary>About this data</summary>
         <p>
-          Returns in the allocator above are a modelled Pareto approximation, not real fund or
-          startup data. Parameters are set so most outcomes land near or below 1x with a small
+          Returns in the allocator above are a modelled Pareto approximation (a mathematical
+          shape where a small number of extreme outcomes account for most of the total), not
+          real fund or startup data. Parameters are set so most outcomes land near or below 1x with a small
           chance of a 10x+ outlier, broadly matching the aggregate pattern Correlation Ventures
           found across roughly 21,000 US venture financings from 2004 to 2013: around
           two-thirds returned less than the capital invested, and only around 4% returned more
@@ -432,6 +452,10 @@ const STRATEGY_EXAMPLE = [
       const breakdownList = document.getElementById("breakdown-list");
       const contributionChart = document.getElementById("contribution-chart");
       const contributionCaption = document.getElementById("contribution-chart-caption");
+      const strategyFills = Array.from(document.querySelectorAll("[data-strategy]"));
+      const strategyValues = Array.from(document.querySelectorAll("[data-strategy-value]"));
+      const strategyCaption = document.getElementById("strategy-chart-caption");
+      const strategyLabel2 = document.getElementById("strategy-label-2");
       const form = document.getElementById("allocator-form");
       const randomiseButton = document.getElementById("randomise-button");
       const feeToggle = document.getElementById("fee-info-toggle");
@@ -478,6 +502,7 @@ const STRATEGY_EXAMPLE = [
         remainingEl.textContent = `Remaining: ${currency(left)}`;
 
         const fullyAllocated = left === 0;
+        remainingEl.classList.toggle("remaining-active", !fullyAllocated);
         submitButton.disabled = !fullyAllocated;
         promptEl.textContent = fullyAllocated
           ? ""
@@ -516,6 +541,13 @@ const STRATEGY_EXAMPLE = [
           const direction = button.dataset.action === "increment" ? 1 : -1;
           setAllocation(index, allocations[index] + direction * STEP);
         });
+      });
+
+      const resetButton = document.getElementById("reset-button");
+      resetButton.addEventListener("click", () => {
+        allocations = allocations.map(() => 0);
+        resetCardColors();
+        render();
       });
 
       randomiseButton.addEventListener("click", () => {
@@ -627,6 +659,20 @@ const STRATEGY_EXAMPLE = [
           contributionChart.appendChild(item);
         });
         contributionCaption.textContent = "Share of your fund's actual return, by startup rank";
+
+        // Swaps the illustrative "diversifying does not change this" chart
+        // for the same draw applied to your actual split, since it is
+        // already computed above for the headline comparison line.
+        const strategyResults = [concentratedMultiple, evenMultiple, yourMultiple];
+        const scale = Math.max(1.5, ...strategyResults);
+        strategyFills.forEach((fill, i) => {
+          fill.style.height = `${(strategyResults[i] / scale) * 100}%`;
+        });
+        strategyValues.forEach((el, i) => {
+          el.textContent = `${strategyResults[i].toFixed(2)}x`;
+        });
+        strategyLabel2.textContent = "Your split";
+        strategyCaption.textContent = "This draw applied to three allocations, including yours";
       });
 
       render();

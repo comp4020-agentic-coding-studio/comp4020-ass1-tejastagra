@@ -69,6 +69,15 @@ h1 {
   margin: 0 0 1rem;
 }
 
+.skip-link {
+  margin: 0 0 1.5rem;
+  font-size: 1rem;
+}
+
+.skip-link a {
+  font-weight: 600;
+}
+
 .framing {
   max-width: 56rem;
   color: var(--muted);
@@ -95,6 +104,11 @@ h1 {
   font-size: clamp(1.75rem, 5vw, 2.75rem);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.remaining-number.remaining-active {
+  color: var(--outlier-accent);
 }
 
 .allocation-prompt {
@@ -225,6 +239,7 @@ h1 {
 .grid-controls {
   display: flex;
   justify-content: flex-end;
+  gap: 0.75rem;
   margin-bottom: 1rem;
 }
 
@@ -402,7 +417,25 @@ h1 {
   color: var(--muted);
   font-size: 1.15rem;
   text-align: center;
-  margin: -1.5rem 0 3.5rem;
+  margin: -1.5rem 0 1.5rem;
+}
+
+.explainer-intro:last-of-type {
+  margin-bottom: 3.5rem;
+}
+
+.explainer-conclusion {
+  max-width: 36rem;
+  margin: 0 auto;
+  color: var(--text);
+  font-size: 1.2rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.explainer-conclusion a {
+  display: inline-block;
+  margin-top: 0.5rem;
 }
 
 .explainer-step {
