@@ -1,74 +1,43 @@
 # Process overview
 
-<!-- TEMPLATE: this file is a shape to fill in, not a form. Replace everything
-     in it with your own overview, and delete this comment — `pnpm
-     check:evidence` will remind you if it's still here. -->
-
 A reading-guide to how the work came together --- a map to your process, not an
-essay about it. Markers read this file and follow its citations; they don't
-trawl the repo for evidence you didn't point at, so if a moment mattered, cite
-it.
-
-This file is the shape; the course site's
-[assessment page](https://comp.anu.edu.au/courses/comp4020-agentic-coding-studio/topics/assessment/#what-you-submit)
-is the requirement, and each brief adds its own word count and moment count.
+essay about it.
 
 ## What I built
 
-One paragraph: the thing, and the idea behind it.
+The power law allocator: a visitor splits a fixed $10M fund across 20
+startups with sliders, then draws simulated returns for each and sees the
+resulting fund multiple. Re-running the draw with a different split shows the
+outcome is dominated by whichever startup happens to hit the tail, not by how
+the fund was diversified.
 
 ## The moments that mattered
 
-Three or four for an assignment; fewer is fine for a weekly prototype. Keep the
-list short so each moment has room to do all four jobs:
+1. **Choosing a return-distribution approach** --- there's no licensable
+   per-deal VC returns dataset, only aggregate published stats (e.g.
+   Correlation Ventures: roughly two-thirds of financings return below 1x, a
+   small share return 10x or more). Rather than fabricate per-startup numbers
+   or chase an unavailable exact dataset, I modelled a mixture distribution
+   (loss/modest/strong bands plus a Pareto tail for the top ~3%) calibrated to
+   match that aggregate shape, and labelled it explicitly as modelled in the
+   UI copy and cited the calibration source in the footer, not just in code
+   comments. I checked this was actually working by scripting slider drags
+   and submits against the built `dist/index.html` with jsdom and reading the
+   resulting fund-return values, rather than assuming the draw logic was
+   correct from reading the code
+   ([`3ba1222`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-tejastagra/commit/3ba1222)).
 
-1. **what happened** --- the problem, or the thing the agent got wrong
-2. **what you did instead of the obvious thing** --- the call you made, and why
-   it beat the obvious one
-3. **how you knew it was right** --- the check you ran, the viewport you looked
-   at, what you read before accepting the diff
-4. **the citation** --- a commit or commit range, a `CLAUDE.md` change, a check
-   that went from red to green, a prompt paired with the commit it produced
-
-Jobs 2 and 3 are the ones the repo can't tell a reader on its own, so they're
-where the marks are. The strongest moments are the ones where a correction
-landed in the **harness** rather than in another prompt --- a rule added to
-`CLAUDE.md`, a check wired up, an attempt thrown away: re-prompting until it
-passes is the routine case, and changing what the agent works against is the
-skilled one.
-
-Cite each moment as a link whose text is the commit hash or range and whose
-target is this repo's commit or compare URL, so a reader clicks straight to the
-evidence:
-
-- one commit: [`a1b2c3d`](https://github.com/YOUR-ORG/YOUR-REPO/commit/a1b2c3d)
-- a range:
-  [`a1b2c3d...e4f5a6b`](https://github.com/YOUR-ORG/YOUR-REPO/compare/a1b2c3d...e4f5a6b)
-
-To pair a prompt with the commit it produced, quote the prompt (curated, not a
-full transcript) next to the citation:
-
-> the prompt, verbatim
-
-Screenshots are welcome where one carries the verification better than a
-sentence does. Commit the file to this repo and link it with a **relative**
-path, which is what makes it render on GitHub: `![alt text](docs/before.png)`.
-Images don't count towards the word count and don't replace the citation.
-
-### A worked moment, for shape
-
-Delete this section along with the rest of the boilerplate --- it's here to show
-the four jobs in one paragraph, not to be imitated in content.
-
-> The date formatter kept coming back with `toLocaleDateString()` and no locale
-> argument, so the same build rendered differently on my machine and in CI. I'd
-> already re-prompted it twice, which fixed the line but not the habit, so the
-> third time I put the rule in `CLAUDE.md` instead
-> ([`3f9ac21`](https://github.com/YOUR-ORG/YOUR-REPO/commit/3f9ac21)) and added
-> a spec test that fails on a bare `toLocaleDateString`. That's what told me it
-> had actually taken: the test went red against the old code and green against
-> the new, and the next two features it wrote passed it without prompting
-> ([`3f9ac21...b7e0d14`](https://github.com/YOUR-ORG/YOUR-REPO/compare/3f9ac21...b7e0d14)).
+2. **Fixed-sum sliders instead of a clamped remaining balance** --- the
+   obvious implementation is to clamp each slider so the running total can't
+   exceed the fund, leaving `fund-remaining` as unallocated cash. Instead I
+   made moving one slider proportionally rescale the other 19 so the total is
+   always exactly the fund and `fund-remaining` reads $0 --- because the brief
+   says the fund is fixed, and a UI that lets cash sit idle undercuts the
+   thesis that diversifying doesn't change the fund's fixed size. Verified
+   with the same jsdom script: dragging one slider to its max drives the other
+   19 to exactly zero, and a partial drag rescales them proportionally with
+   the sum still landing on exactly $10,000,000 every time
+   ([`3ba1222`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-tejastagra/commit/3ba1222)).
 
 ## Before you ship
 
