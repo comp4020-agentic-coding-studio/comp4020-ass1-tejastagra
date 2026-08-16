@@ -152,6 +152,34 @@ means building legibly is part of building well.
 You don't need a name, a student number, or any identity file in the repo: we
 know whose repo it is. Spend the effort on the work.
 
+## This week's prototype: the power law allocator
+
+Topic: venture capital's power law — a single outlier investment determines
+almost all of a diversified fund's returns, however you split it.
+
+Interaction: the visitor allocates a fixed fund (e.g. $10M) across N startups
+(e.g. 20) with sliders, constrained so the total always equals the fund. On
+submit, each startup draws a return multiple from a fat-tailed distribution;
+the visitor sees the resulting fund return and can change strategy (even
+spread vs. concentrated bets) and resubmit to see the outcome barely moves.
+
+`spec/assignment-1.test.ts` asserts the structural contract this needs,
+against the built `dist/`:
+
+- `[data-testid="fund-total"]` — states the fixed fund amount
+- `[data-testid="allocation-slider"]` — one `<input type="range">` per
+  startup, at least two
+- `[data-testid="fund-remaining"]` with `aria-live="polite"` — running
+  total/remaining as sliders move
+- `[data-testid="allocate-submit"]` — runs the draw, not disabled on load
+- `[data-testid="fund-return"]` with `aria-live="polite"` — the resulting
+  fund return, since it updates on every submit without a reload
+
+It's Astro (`src/pages/index.astro`), not the template's default Vite +
+hand-written HTML — `base` in `astro.config.mjs` is already set to
+`/comp4020-ass1-tejastagra` for GitHub Pages; don't add a second base path in
+links, `import.meta.env.BASE_URL` already carries it.
+
 ## This file is yours
 
 This CLAUDE.md is a starting point, not a fixed rulebook. As you learn what your
