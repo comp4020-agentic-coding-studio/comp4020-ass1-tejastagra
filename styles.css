@@ -82,7 +82,7 @@ h1 {
   top: 0;
   z-index: 10;
   background: var(--bg);
-  padding-bottom: 1rem;
+  padding-bottom: 1.5rem;
 }
 
 .remaining-bar {
@@ -303,7 +303,7 @@ h1 {
   display: flex;
   justify-content: flex-end;
   gap: 0.75rem;
-  padding-top: 1.5rem;
+  margin-bottom: 1rem;
 }
 
 .randomise-button {
