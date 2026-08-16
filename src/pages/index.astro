@@ -570,46 +570,40 @@ const STRATEGY_EXAMPLE = [
         return best;
       }
 
-      // Shelf-packs circles largest-first into rows: each row is centred and
-      // as wide as the container, so the biggest circles land in the top
-      // rows and smaller ones settle lower, with no overlap possible since
-      // every row occupies its own vertical band.
-      function packCirclesTopDown(items, width, pad, gap) {
-        let cursorX = pad;
-        let cursorY = pad;
-        let rowMaxR = 0;
-        let rowStart = 0;
-        let rowHasItem = false;
-        const positioned = [];
+      // How many side-by-side columns the chart spans at a given width —
+      // more columns on wide viewports so the layout actually fills the
+      // available width instead of collapsing into one tall stack.
+      function bubbleColumnCount(width) {
+        if (width < 480) return 2;
+        if (width < 760) return 3;
+        if (width < 1100) return 4;
+        return 5;
+      }
 
-        function closeRow(rowEndX) {
-          if (!rowHasItem) return;
-          const rowWidth = rowEndX - pad;
-          const offset = Math.max(0, (width - pad * 2 - rowWidth) / 2);
-          for (let i = rowStart; i < positioned.length; i++) positioned[i].x += offset;
-        }
+      // Packs circles largest-first into fixed-width columns, always adding
+      // the next circle to whichever column is currently shortest. The
+      // biggest circles (placed first) start a column each, so they land
+      // side by side across the top and the layout spans the full width;
+      // smaller ones settle in underneath whichever column has room. Circles
+      // never overlap: same-column circles stack edge to edge, and no
+      // circle's radius is ever allowed to exceed half its own column's
+      // width, so neighbouring columns can't reach into each other either.
+      function packCirclesMasonry(items, width, pad, gap, cols) {
+        const innerWidth = width - pad * 2 - gap * (cols - 1);
+        const colWidth = innerWidth / cols;
+        const colHeights = Array.from({ length: cols }, () => pad);
+        const colCenters = Array.from({ length: cols }, (_, i) => pad + i * (colWidth + gap) + colWidth / 2);
 
         items.forEach((item) => {
-          const need = item.r * 2;
-          if (rowHasItem && cursorX + gap + need > width - pad) {
-            closeRow(cursorX);
-            cursorY += rowMaxR * 2 + gap;
-            cursorX = pad;
-            rowMaxR = 0;
-            rowStart = positioned.length;
-            rowHasItem = false;
-          }
-          if (rowHasItem) cursorX += gap;
-          if (!rowHasItem) rowMaxR = item.r;
-          item.x = cursorX + item.r;
-          item.y = cursorY + rowMaxR;
-          positioned.push(item);
-          cursorX += need;
-          rowHasItem = true;
+          let col = 0;
+          for (let i = 1; i < cols; i++) if (colHeights[i] < colHeights[col]) col = i;
+          item.x = colCenters[col];
+          item.y = colHeights[col] + item.r;
+          colHeights[col] += item.r * 2 + gap;
         });
-        closeRow(cursorX);
-        const height = cursorY + rowMaxR * 2 + pad;
-        return { height };
+
+        const height = Math.max(...colHeights) - gap + pad;
+        return { height, colWidth };
       }
 
       // Draws each startup as a circle whose area is proportional to its
@@ -621,9 +615,16 @@ const STRATEGY_EXAMPLE = [
         const width = Math.max(240, bubbleChart.clientWidth || 800);
         const pad = 20;
         const gap = 8;
-        // The dominant circle is capped so it — and its label — always fits
-        // inside the chart's own width, never spilling past the viewport.
-        const rMax = Math.max(50, width / 2 - pad);
+        // Circles are capped to fit inside their own column rather than
+        // half the whole page — a cap of "half the container" made the
+        // dominant circle's own row as tall as the page was wide, which is
+        // what was blowing the chart's height out. Capping to half a
+        // column's width instead keeps the giant circle clearly dominant
+        // without the layout ballooning vertically, and still guarantees it
+        // (and its label) always fits fully on screen.
+        const cols = bubbleColumnCount(width);
+        const colWidth = (width - pad * 2 - gap * (cols - 1)) / cols;
+        const rMax = Math.max(40, colWidth / 2 - 4);
 
         const labels = multiples.map((m, i) => computeLabel(bubbleMeasureCtx, STARTUP_NAMES[i], `${m.toFixed(2)}x`));
         const radiusFloor = Math.min(rMax, Math.max(...labels.map((l) => l.r)));
@@ -641,7 +642,7 @@ const STRATEGY_EXAMPLE = [
         }));
 
         const sorted = [...circles].sort((a, b) => b.r - a.r);
-        const { height } = packCirclesTopDown(sorted, width, pad, gap);
+        const { height } = packCirclesMasonry(sorted, width, pad, gap, cols);
 
         const svg = document.createElementNS(svgNS, "svg");
         svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
