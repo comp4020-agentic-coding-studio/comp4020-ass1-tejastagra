@@ -182,8 +182,7 @@ links, `import.meta.env.BASE_URL` already carries it.
 
 ## This file is yours
 
-## The thesis (do not drift from this)
-
+# The thesis (do not drift from this)
 No matter how you diversify a VC fund across many startups, a single outlier investment will determine almost all of your returns. Every feature decision gets checked against this sentence. If a feature does not serve it, cut it.
 
 Do not add:
@@ -193,26 +192,31 @@ Do not add:
 - User accounts, save/load, or any backend
 
 ## Data integrity
-
 - The return distribution must be either real published data or a clearly labelled modelled approximation (eg Pareto distribution parameterised to match publicly reported venture return curves).
 - Never silently swap in placeholder or fabricated numbers. If a number is modelled rather than sourced, label it as modelled in the UI copy, not just in code comments.
 - Cite the data source in the app itself (footer or info panel), not only in the README.
 
-## Check in with me
+## Verify before accepting
+Before presenting any calculated or derived number as correct, verify what it actually represents against its real-world meaning, not just that a chart or figure changed visually. This session had two bugs that looked fine on screen but were wrong underneath: a comparison scenario pinned to a fixed array index rather than the value it claimed to represent, and a chart bucket hardcoded to never change while the others did. When adding or changing any calculation, trace through what it should mean, not just whether the UI updates.
 
+## Scope discipline
+Only implement what's explicitly asked. Don't add navigation elements, UI affordances, animations, or styling flourishes beyond the specific request, even if they seem like reasonable defaults. If something seems missing or worth adding, ask first rather than adding it.
+
+## Check in with me
 - Before making any non-trivial decision (data source choice, distribution parameters, visual layout direction, scope cuts), stop and check with me rather than assuming and proceeding.
 - If you hit a fork where more than one reasonable approach exists, present the options briefly and wait for my call instead of picking one silently.
 - Do not mark a task as "done" without telling me what you changed and why, so I have something concrete to cite in PROCESS.md.
 - If you're about to throw away an attempt or start over, tell me what didn't work and why before doing it. That's exactly the kind of moment that needs to end up in PROCESS.md.
 
-## Visual style reference
+## Animation
+Add subtle motion to interactive elements across the site: a slight fade in/out and a small shift of a few pixels on hover, state changes, and appearing/disappearing content, rather than snapping instantly. Keep it quick and understated (roughly 150-200ms, gentle easing), it should make the page feel responsive, not decorative. Apply this consistently wherever something appears, disappears, or responds to interaction. Respect prefers-reduced-motion everywhere.
 
+## Visual style reference
 Reference: lawsofux.com. Large, visually distinct cards are explicitly wanted:
 each startup card can carry its own accent colour and a distinct piece of
 artwork/icon treatment, in the spirit of lawsofux's card grid. Use a light
 background overall rather than lawsofux's dark scheme. Otherwise match the
 general feel:
-
 - Light background overall, restrained and high contrast, not stark white with
   no depth. Individual cards may carry their own accent colour.
 - Typography does the heavy lifting, generous whitespace, no unnecessary chrome
@@ -234,19 +238,7 @@ diagram-led pacing is inspired by ciechanow.ski.
 If a design decision is ambiguous, check with me before picking a direction (see "Check in with me" above).
 
 ## Style
-
 - No filler copy, no marketing tone. Direct, plain language throughout the UI text.
 - No Oxford commas, no em dashes anywhere in written copy.
 - UK English spelling (eg "visualise", "colour").
-
-## Scope discipline
-
-Only implement what's explicitly asked. Don't add navigation elements, UI affordances, animations, or styling flourishes beyond the specific request, even if they seem like reasonable defaults. If something seems missing or worth adding, ask first rather than adding it.
-
-## Verify before accepting
-
-Before presenting any calculated or derived number as correct, verify what it actually represents against its real-world meaning, not just that a chart or figure changed visually. This session had two bugs that looked fine on screen but were wrong underneath: a comparison scenario pinned to a fixed array index rather than the value it claimed to represent, and a chart bucket hardcoded to never change while the others did. When adding or changing any calculation, trace through what it should mean, not just whether the UI updates.
-
-## Writing style: no "X, not Y"
-
-Do not use the "X, not Y" or "Y, not X" sentence construction (eg "it's about hindsight bias, not allocation being irrelevant"). This pattern shows up repeatedly and reads as stilted. Write plainly and directly instead.
+- Do not use the "X, not Y" or "Y, not X" sentence construction (eg "it's about hindsight bias, not allocation being irrelevant"). This pattern shows up repeatedly and reads as stilted. Write plainly and directly instead.
