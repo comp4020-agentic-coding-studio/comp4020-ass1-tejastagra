@@ -77,13 +77,16 @@ h1 {
   display: flow-root;
 }
 
-.remaining-bar {
+.sticky-toolbar {
   position: sticky;
   top: 0;
   z-index: 10;
   background: var(--bg);
+  padding-bottom: 1rem;
+}
+
+.remaining-bar {
   padding: 0.75rem 0 1rem;
-  margin-bottom: 1.5rem;
   border-bottom: 1px solid var(--border);
 }
 
@@ -300,7 +303,7 @@ h1 {
   display: flex;
   justify-content: flex-end;
   gap: 0.75rem;
-  margin-bottom: 1rem;
+  padding-top: 1.5rem;
 }
 
 .randomise-button {
