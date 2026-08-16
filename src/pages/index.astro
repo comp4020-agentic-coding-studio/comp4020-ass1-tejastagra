@@ -783,6 +783,28 @@ const STRATEGY_EXAMPLE = [
           });
         }
 
+        // Hard ceiling on the chart's own height: an extreme draw (a huge
+        // outlier multiple) packs into a cluster that's tall relative to how
+        // wide the container is, and fitting only the width (above) lets that
+        // height run away — the dominant circle can end up filling the whole
+        // visible chart with the rest scrolled out of view. Capped to a
+        // multiple of the viewport height, not left unbounded, and applied as
+        // one more uniform scale so every circle's relative size is unchanged.
+        const availableHeight = Math.max(1, window.innerHeight * 0.7 - pad * 2);
+        const footprintHeight = maxY - minY;
+        if (footprintHeight > availableHeight) {
+          const heightShrink = availableHeight / footprintHeight;
+          sorted.forEach((c) => {
+            c.x *= heightShrink;
+            c.y *= heightShrink;
+            c.r *= heightShrink;
+          });
+          minX *= heightShrink;
+          maxX *= heightShrink;
+          minY *= heightShrink;
+          maxY *= heightShrink;
+        }
+
         const shiftX = pad - minX + Math.max(0, (availableWidth - (maxX - minX)) / 2);
         const shiftY = pad - minY;
         sorted.forEach((c) => {
