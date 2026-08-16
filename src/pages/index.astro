@@ -1,12 +1,37 @@
 ---
 import "../../styles.css";
 
+const RAISED_TOTAL = 12_500_000;
 const FUND_TOTAL = 10_000_000;
-const STARTUP_COUNT = 20;
-const EVEN_SPLIT = FUND_TOTAL / STARTUP_COUNT;
-const startups = Array.from({ length: STARTUP_COUNT }, (_, i) => ({
+const STARTUP_COUNT = 15;
+const STEP = 250_000;
+
+const BASE_SHARE = Math.floor(FUND_TOTAL / STARTUP_COUNT);
+const REMAINDER = FUND_TOTAL - BASE_SHARE * STARTUP_COUNT;
+
+const STARTUP_INFO = [
+  { name: "Orbital Analytics", description: "Satellite imagery for crop insurers" },
+  { name: "Loopwave", description: "Recycled battery chemistry for EVs" },
+  { name: "Fernway Health", description: "Remote diagnostics for rural clinics" },
+  { name: "Cursive AI", description: "Handwriting-to-text for legal filings" },
+  { name: "Driftline", description: "Autonomous freight barges" },
+  { name: "Solstice Grid", description: "Community solar microgrids" },
+  { name: "Nomad Labs", description: "Modular housing for disaster relief" },
+  { name: "Verdant Foods", description: "Lab-grown fibre for meat alternatives" },
+  { name: "Pathwell", description: "Mental health triage chatbot" },
+  { name: "Anchor Robotics", description: "Warehouse picking robots" },
+  { name: "Cinderpoint", description: "Wildfire early-detection sensors" },
+  { name: "Marrow Bio", description: "Bone marrow donor matching platform" },
+  { name: "Tallyworks", description: "Small business bookkeeping automation" },
+  { name: "Skyloom", description: "Drone-based crop spraying" },
+  { name: "Undertone", description: "Noise-cancelling hearing aids" },
+];
+
+const startups = STARTUP_INFO.slice(0, STARTUP_COUNT).map((info, i) => ({
   id: i + 1,
-  name: `Startup ${i + 1}`,
+  name: info.name,
+  description: info.description,
+  initial: BASE_SHARE + (i < REMAINDER ? 1 : 0),
 }));
 ---
 
@@ -26,10 +51,23 @@ const startups = Array.from({ length: STARTUP_COUNT }, (_, i) => ({
     <main>
       <h1>The power law allocator</h1>
       <p class="framing">
-        Split a fixed <strong data-testid="fund-total">${FUND_TOTAL.toLocaleString("en-AU")}</strong>
-        fund across {STARTUP_COUNT} startups however you like. However you divide it, one outlier
-        decides almost all of the return.
+        This fund raised ${RAISED_TOTAL.toLocaleString("en-AU")}. About 20% goes to management
+        fees over its life, leaving <strong data-testid="fund-total">${FUND_TOTAL.toLocaleString("en-AU")}</strong>
+        to invest across {STARTUP_COUNT} startups. However you divide it, one outlier decides
+        almost all of the return.
+        <button type="button" class="info-toggle" id="fee-info-toggle" aria-expanded="false" aria-controls="fee-info">
+          Why only 80%?
+        </button>
       </p>
+      <div id="fee-info" class="fee-info" hidden>
+        <p>
+          Funds typically charge a management fee of around 2% a year, charged across roughly ten
+          years, to cover salaries and other running costs. That works out to about 20% of the
+          ${RAISED_TOTAL.toLocaleString("en-AU")} raised, leaving roughly ${FUND_TOTAL.toLocaleString("en-AU")} to
+          actually invest in startups. This is a modelled assumption, not a specific fund's real
+          fee schedule.
+        </p>
+      </div>
 
       <div class="remaining-bar">
         <p data-testid="fund-remaining" aria-live="polite" class="remaining-number">Remaining: $0</p>
@@ -37,25 +75,52 @@ const startups = Array.from({ length: STARTUP_COUNT }, (_, i) => ({
       </div>
 
       <form id="allocator-form">
+        <div class="grid-controls">
+          <button type="button" id="randomise-button" class="randomise-button">Randomise allocation</button>
+        </div>
         <ul class="startup-grid">
           {
             startups.map((startup) => (
               <li class="startup-card">
-                <label for={`slider-${startup.id}`}>{startup.name}</label>
+                <p class="startup-name">{startup.name}</p>
+                <p class="startup-description">{startup.description}</p>
+                <div class="stepper">
+                  <button
+                    type="button"
+                    class="step-btn"
+                    data-action="decrement"
+                    data-index={startup.id - 1}
+                    aria-label={`Decrease allocation for ${startup.name}`}
+                  >
+                    &minus;
+                  </button>
+                  <output for={`slider-${startup.id}`} id={`value-${startup.id}`}>
+                    ${startup.initial.toLocaleString("en-AU")}
+                  </output>
+                  <button
+                    type="button"
+                    class="step-btn"
+                    data-action="increment"
+                    data-index={startup.id - 1}
+                    aria-label={`Increase allocation for ${startup.name}`}
+                  >
+                    &plus;
+                  </button>
+                </div>
                 <input
                   type="range"
                   id={`slider-${startup.id}`}
                   name={`slider-${startup.id}`}
                   data-testid="allocation-slider"
                   data-index={startup.id - 1}
+                  class="visually-hidden"
+                  tabindex="-1"
+                  aria-hidden="true"
                   min="0"
                   max={FUND_TOTAL}
                   step="10000"
-                  value={EVEN_SPLIT}
+                  value={startup.initial}
                 />
-                <output for={`slider-${startup.id}`} id={`value-${startup.id}`}>
-                  ${EVEN_SPLIT.toLocaleString("en-AU")}
-                </output>
               </li>
             ))
           }
@@ -78,12 +143,12 @@ const startups = Array.from({ length: STARTUP_COUNT }, (_, i) => ({
           are set so most outcomes land near or below 1x with a small chance of a 10x+ outlier,
           broadly matching the aggregate pattern in Correlation Ventures' venture outcomes
           analysis (around two-thirds of financings return below 1x; a small share return 10x
-          or more).
+          or more). Startup names and descriptions are fictional, for illustration only.
         </p>
       </details>
     </footer>
 
-    <script is:inline define:vars={{ FUND_TOTAL, STARTUP_COUNT }}>
+    <script is:inline define:vars={{ FUND_TOTAL, STARTUP_COUNT, STEP }}>
       const sliders = Array.from(document.querySelectorAll('[data-testid="allocation-slider"]'));
       const outputs = sliders.map((slider) => document.getElementById(`value-${slider.id.split("-")[1]}`));
       const remainingEl = document.querySelector('[data-testid="fund-remaining"]');
@@ -92,6 +157,9 @@ const startups = Array.from({ length: STARTUP_COUNT }, (_, i) => ({
       const returnEl = document.querySelector('[data-testid="fund-return"]');
       const compareEl = document.querySelector(".payoff-compare");
       const form = document.getElementById("allocator-form");
+      const randomiseButton = document.getElementById("randomise-button");
+      const feeToggle = document.getElementById("fee-info-toggle");
+      const feeInfo = document.getElementById("fee-info");
 
       let allocations = sliders.map((slider) => Number(slider.value));
 
@@ -101,7 +169,24 @@ const startups = Array.from({ length: STARTUP_COUNT }, (_, i) => ({
         return FUND_TOTAL - allocations.reduce((sum, v) => sum + v, 0);
       }
 
-      // Each slider can only take what's left over the fund: its own headroom
+      // Rounds each allocation to a whole dollar while keeping the sum exactly
+      // equal to `total`, by handing the leftover cents to the largest
+      // fractional remainders first.
+      function largestRemainderRound(values, total) {
+        const floors = values.map(Math.floor);
+        const used = floors.reduce((a, b) => a + b, 0);
+        const remainder = total - used;
+        const order = values
+          .map((v, i) => ({ i, frac: v - Math.floor(v) }))
+          .sort((a, b) => b.frac - a.frac);
+        const result = [...floors];
+        for (let k = 0; k < remainder; k++) {
+          result[order[k % order.length].i] += 1;
+        }
+        return result;
+      }
+
+      // Each control can only take what's left over the fund: its own headroom
       // is its current value plus whatever hasn't been allocated elsewhere.
       // The fund never grows, so submit stays locked until it's fully spent.
       function render() {
@@ -111,8 +196,6 @@ const startups = Array.from({ length: STARTUP_COUNT }, (_, i) => ({
           const cap = value + left;
           slider.max = String(cap);
           slider.value = String(value);
-          const pct = cap > 0 ? (value / cap) * 100 : 0;
-          slider.style.background = `linear-gradient(to right, var(--accent) ${pct}%, var(--track) ${pct}%)`;
           outputs[i].textContent = currency(value);
         });
 
@@ -125,16 +208,37 @@ const startups = Array.from({ length: STARTUP_COUNT }, (_, i) => ({
           : `Allocate the full ${currency(FUND_TOTAL)} to continue.`;
       }
 
-      function onSliderInput(index, slider) {
+      function setAllocation(index, rawValue) {
         const left = remaining();
         const cap = allocations[index] + left;
-        const value = Math.max(0, Math.min(cap, Number(slider.value)));
-        allocations[index] = value;
+        allocations[index] = Math.max(0, Math.min(cap, rawValue));
         render();
       }
 
       sliders.forEach((slider, i) => {
-        slider.addEventListener("input", () => onSliderInput(i, slider));
+        slider.addEventListener("input", () => setAllocation(i, Number(slider.value)));
+      });
+
+      document.querySelectorAll(".step-btn").forEach((button) => {
+        button.addEventListener("click", () => {
+          const index = Number(button.dataset.index);
+          const direction = button.dataset.action === "increment" ? 1 : -1;
+          setAllocation(index, allocations[index] + direction * STEP);
+        });
+      });
+
+      randomiseButton.addEventListener("click", () => {
+        const weights = allocations.map(() => Math.random());
+        const weightTotal = weights.reduce((a, b) => a + b, 0);
+        const scaled = weights.map((w) => (w / weightTotal) * FUND_TOTAL);
+        allocations = largestRemainderRound(scaled, FUND_TOTAL);
+        render();
+      });
+
+      feeToggle.addEventListener("click", () => {
+        const expanded = feeToggle.getAttribute("aria-expanded") === "true";
+        feeToggle.setAttribute("aria-expanded", String(!expanded));
+        feeInfo.hidden = expanded;
       });
 
       // Modelled Pareto approximation, calibrated against the aggregate shape
