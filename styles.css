@@ -323,13 +323,13 @@ h1 {
 }
 
 #randomise-button {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: var(--surface);
+  border-color: rgb(11 95 255 / 35%);
+  background: rgb(11 95 255 / 8%);
+  color: var(--accent);
 }
 
 #randomise-button:hover {
-  background: #0a54e0;
+  background: rgb(11 95 255 / 14%);
 }
 
 .info-toggle {
