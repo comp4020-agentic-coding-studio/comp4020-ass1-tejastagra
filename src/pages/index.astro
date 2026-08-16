@@ -130,7 +130,7 @@ const STRATEGY_EXAMPLE = [
           Why only 80%?
         </button>
       </p>
-      <div id="fee-info" class="fee-info" hidden>
+      <div id="fee-info" class="fee-info">
         <p>
           Funds typically charge a management fee of roughly 2% each year, charged across roughly ten
           years, to cover salaries and other running costs. That works out to about 20% of the
@@ -1044,13 +1044,13 @@ const STRATEGY_EXAMPLE = [
 
       function openFeeInfo() {
         feeToggle.setAttribute("aria-expanded", "true");
-        feeInfo.hidden = false;
         positionFeeInfo();
+        feeInfo.classList.add("fee-info-open");
       }
 
       function closeFeeInfo() {
         feeToggle.setAttribute("aria-expanded", "false");
-        feeInfo.hidden = true;
+        feeInfo.classList.remove("fee-info-open");
       }
 
       const supportsHoverPopover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
