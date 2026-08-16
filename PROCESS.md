@@ -162,6 +162,40 @@ the fund was diversified.
     circles and none out of bounds at any width
     ([`7524f00`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-tejastagra/commit/7524f00)).
 
+12. **Replacing the column layout with real greedy circle packing** --- the
+    masonry columns fixed the vertical ballooning but still looked like a
+    grid: circles sat in separate vertical lanes with visible gaps between
+    them, not a connected mass, and small circles at column edges had
+    nothing to touch. Told explicitly to use "an actual packing approach ---
+    largest circle first, each subsequent circle fitted against the existing
+    cluster at the nearest valid touching position" rather than a grid or
+    column layout, I rewrote the packer around exact circle-circle tangent
+    geometry: place the biggest circle, then for each remaining circle try
+    every pair of already-placed circles' tangent points (falling back to a
+    tangent search against the single nearest circle if no pair yields a
+    valid spot), keeping the candidate closest to the cluster's centre. I
+    also dropped the legibility floor on circle size entirely --- area is now
+    purely proportional to return multiple with no minimum --- and instead
+    place a compact "name multiple" label just outside any circle too small
+    to hold its label inside, since forcing tiny circles to grow to fit text
+    contradicted the "no minimum floor" requirement. The whole pack is then
+    scaled uniformly to fit the viewport (capping upscale so a sparse pack
+    doesn't blow out), with an iterative correction pass because outside
+    labels extend past their circle's own edge and can widen the true
+    footprint past the first-pass scale. Continuous idle drift was added on
+    top --- each circle bobs on its own sine/cosine timing, running through
+    the same collision resolver used for dragging so idle motion can never
+    introduce overlap, and disabled entirely under `prefers-reduced-motion`.
+    Verified with a jsdom script driving allocate-and-submit at three widths
+    (1920/390/1300px) across repeated random draws: every circle touches at
+    least one neighbour and none overlap at rest, none exceed the viewBox,
+    and a synthetic worst-case corner drag on the narrow viewport converges
+    to at most a few px of residual overlap (often exactly zero) after
+    raising the collision resolver's iteration count, consistent with the
+    brief's "soft collision, not full realism" framing rather than an exact
+    physics solve
+    ([`0bbacfe`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-tejastagra/commit/0bbacfe)).
+
 ## Before you ship
 
 `pnpm check:evidence` verifies your citations resolve to real commits, that the
