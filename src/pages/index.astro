@@ -107,14 +107,8 @@ const STRATEGY_EXAMPLE = [
     <title>COMP4020 prototype</title>
   </head>
   <body>
-    <header>
-      <nav aria-label="Primary">
-        <a href={import.meta.env.BASE_URL}>Home</a>
-      </nav>
-    </header>
     <main>
-      <p class="eyebrow">A venture fund investment simulator</p>
-      <h1>The power law allocator</h1>
+      <h1>The power law simulator</h1>
       <p class="intro">
         A "venture fund" is a pool of money that professional investors put into young,
         unproven companies ("startups") in exchange for a stake in each one. Most startups fail
@@ -123,9 +117,11 @@ const STRATEGY_EXAMPLE = [
         over. This page walks through how that actually plays out. You play fund manager: split
         a fixed pool of money across {STARTUP_COUNT} startups, then see what comes back.
       </p>
-      <p class="skip-link">
-        New to venture investing? <a href="#explainer">Read how the power law works first ↓</a>
-      </p>
+      <nav aria-label="Primary">
+        <p class="skip-link">
+          New to venture investing? <a href="#explainer">Read how the power law works first ↓</a>
+        </p>
+      </nav>
       <p class="framing">
         This fund raised ${RAISED_TOTAL.toLocaleString("en-AU")}. Fees take about 20% over its
         life. That leaves <strong data-testid="fund-total">${FUND_TOTAL.toLocaleString("en-AU")}</strong> to
@@ -245,7 +241,7 @@ const STRATEGY_EXAMPLE = [
           outcomes clustering around an average. Venture funds live and die by that one fact.
         </p>
         <p class="explainer-intro">
-          When you click "Invest" in the allocator above, the site does "the draw": it randomly
+          When you click "Invest" in the simulator above, the site does "the draw": it randomly
           picks a return multiple for each startup from a distribution shaped like the one below,
           then adds up what your money invested in each one turned into. That is what produces
           the fund return you see, and it is why the same allocation can turn out very
@@ -334,7 +330,7 @@ const STRATEGY_EXAMPLE = [
               Spread your money evenly, concentrate it in one bet, or split it any other way:
               once the outlier lands, the fund's overall multiple ends up close to the same
               number regardless. This example shows one illustrative draw applied to three
-              different allocations. Use the allocator above to see it happen with your own
+              different allocations. Use the simulator above to see it happen with your own
               numbers.
             </p>
             <p>
@@ -366,7 +362,7 @@ const STRATEGY_EXAMPLE = [
           Put together, these three facts are the whole thesis: most bets lose, one outlier
           repays all of them, and no allocation changes that. The only thing left to test is
           whether it holds for your own split.
-          <a href="#allocator-form">Try the allocator again ↑</a>
+          <a href="#allocator-form">Try the simulator again ↑</a>
         </p>
       </section>
     </main>
@@ -390,7 +386,7 @@ const STRATEGY_EXAMPLE = [
       <details class="info-panel">
         <summary>About this data</summary>
         <p>
-          Returns in the allocator above are a modelled Pareto approximation (a mathematical
+          Returns in the simulator above are a modelled Pareto approximation (a mathematical
           shape where a small number of extreme outcomes account for most of the total), not
           real fund or startup data. Parameters are set so most outcomes land near or below 1x with a small
           chance of a 10x+ outlier, broadly matching the aggregate pattern Correlation Ventures

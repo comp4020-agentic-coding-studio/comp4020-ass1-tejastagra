@@ -12,7 +12,7 @@
 
 body {
   margin: 0;
-  padding: 0 2rem 4rem;
+  padding: 3rem 2rem 4rem;
   font-family:
     system-ui,
     -apple-system,
@@ -30,16 +30,8 @@ main {
   margin: 0 auto;
 }
 
-header nav {
-  width: 80%;
-  max-width: 90rem;
-  margin: 0 auto;
-  padding: 1.25rem 0 0;
-}
-
 @media (width <= 700px) {
-  main,
-  header nav {
+  main {
     width: 92%;
   }
 }
@@ -50,28 +42,19 @@ a {
 
 h1 {
   font-size: clamp(2.25rem, 5vw, 3.25rem);
-  margin-bottom: 0.5rem;
-}
-
-.eyebrow {
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--accent);
-  margin: 0 0 0.5rem;
+  margin: 0 0 0.75rem;
 }
 
 .intro {
   max-width: 56rem;
   color: var(--text);
-  font-size: 1.2rem;
+  font-size: 1.15rem;
   margin: 0 0 1rem;
 }
 
 .skip-link {
   margin: 0 0 1.5rem;
-  font-size: 1rem;
+  font-size: 1.15rem;
 }
 
 .skip-link a {
@@ -81,7 +64,7 @@ h1 {
 .framing {
   max-width: 56rem;
   color: var(--muted);
-  font-size: 1.3rem;
+  font-size: 1.15rem;
   margin-top: 0;
 }
 
