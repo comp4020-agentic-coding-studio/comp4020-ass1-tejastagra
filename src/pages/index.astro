@@ -200,6 +200,7 @@ const STRATEGY_EXAMPLE = [
                 <div class="startup-icon" aria-hidden="true" set:html={`<svg viewBox="0 0 24 24">${startup.icon}</svg>`} />
                 <p class="startup-name">{startup.name}</p>
                 <p class="startup-description">{startup.description}</p>
+                <p class="card-return" id={`return-${startup.id}`} aria-live="polite"></p>
                 <div class="stepper">
                   <button
                     type="button"
@@ -248,6 +249,15 @@ const STRATEGY_EXAMPLE = [
       <section class="payoff">
         <p data-testid="fund-return" class="payoff-number" aria-live="polite"></p>
         <p class="payoff-compare"></p>
+      </section>
+
+      <section class="breakdown">
+        <h2>Startup returns, ranked</h2>
+        <p class="breakdown-caption">
+          The same draw shown above, per startup. Whichever one lands at the top is what decided
+          your fund's return, not how you split the money.
+        </p>
+        <ol class="breakdown-list" id="breakdown-list"></ol>
       </section>
 
       <section class="explainer">
@@ -349,14 +359,17 @@ const STRATEGY_EXAMPLE = [
       </details>
     </footer>
 
-    <script is:inline define:vars={{ FUND_TOTAL, STARTUP_COUNT, STEP }}>
+    <script is:inline define:vars={{ FUND_TOTAL, STARTUP_COUNT, STEP, STARTUP_NAMES: startups.map((s) => s.name) }}>
       const sliders = Array.from(document.querySelectorAll('[data-testid="allocation-slider"]'));
       const outputs = sliders.map((slider) => document.getElementById(`value-${slider.id.split("-")[1]}`));
+      const cards = Array.from(document.querySelectorAll(".startup-card"));
+      const cardReturns = sliders.map((slider) => document.getElementById(`return-${slider.id.split("-")[1]}`));
       const remainingEl = document.querySelector('[data-testid="fund-remaining"]');
       const promptEl = document.querySelector(".allocation-prompt");
       const submitButton = document.querySelector('[data-testid="allocate-submit"]');
       const returnEl = document.querySelector('[data-testid="fund-return"]');
       const compareEl = document.querySelector(".payoff-compare");
+      const breakdownList = document.getElementById("breakdown-list");
       const form = document.getElementById("allocator-form");
       const randomiseButton = document.getElementById("randomise-button");
       const feeToggle = document.getElementById("fee-info-toggle");
@@ -485,6 +498,27 @@ const STRATEGY_EXAMPLE = [
         // Force a reflow so the animation class can be re-added on repeat submits.
         void returnEl.offsetWidth;
         returnEl.classList.add("payoff-pop");
+
+        // Per-startup draws: shows which single company actually drove the
+        // fund-level number above, rather than leaving the mechanism hidden.
+        const outlierIndex = multiples.indexOf(Math.max(...multiples));
+        cards.forEach((card, i) => {
+          cardReturns[i].textContent = `Returned ${multiples[i].toFixed(2)}x`;
+          card.classList.toggle("startup-card-outlier", i === outlierIndex);
+        });
+
+        const ranked = multiples
+          .map((multiple, i) => ({ multiple, name: STARTUP_NAMES[i] }))
+          .sort((a, b) => b.multiple - a.multiple);
+
+        breakdownList.innerHTML = "";
+        ranked.forEach((entry, rank) => {
+          const item = document.createElement("li");
+          item.className = "breakdown-item";
+          if (rank === 0) item.classList.add("breakdown-item-outlier");
+          item.innerHTML = `<span class="breakdown-name">${entry.name}</span><span class="breakdown-multiple">${entry.multiple.toFixed(2)}x</span>`;
+          breakdownList.appendChild(item);
+        });
       });
 
       render();
