@@ -1041,28 +1041,60 @@ const STRATEGY_EXAMPLE = [
         feeInfo.style.top = `${top}px`;
       }
 
-      function closeFeeInfo() {
-        feeToggle.setAttribute("aria-expanded", "false");
-        feeInfo.hidden = true;
-        document.removeEventListener("click", onOutsideFeeInfoClick);
-      }
-
-      function onOutsideFeeInfoClick(event) {
-        if (feeInfo.contains(event.target) || feeToggle.contains(event.target)) return;
-        closeFeeInfo();
-      }
-
-      feeToggle.addEventListener("click", () => {
-        const expanded = feeToggle.getAttribute("aria-expanded") === "true";
-        if (expanded) {
-          closeFeeInfo();
-          return;
-        }
+      function openFeeInfo() {
         feeToggle.setAttribute("aria-expanded", "true");
         feeInfo.hidden = false;
         positionFeeInfo();
-        document.addEventListener("click", onOutsideFeeInfoClick);
-      });
+      }
+
+      function closeFeeInfo() {
+        feeToggle.setAttribute("aria-expanded", "false");
+        feeInfo.hidden = true;
+      }
+
+      const supportsHoverPopover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+
+      if (supportsHoverPopover) {
+        let hoverCloseTimer = null;
+        const cancelHoverClose = () => {
+          if (hoverCloseTimer) {
+            clearTimeout(hoverCloseTimer);
+            hoverCloseTimer = null;
+          }
+        };
+        const scheduleHoverClose = () => {
+          cancelHoverClose();
+          hoverCloseTimer = setTimeout(closeFeeInfo, 100);
+        };
+        const showOnHover = () => {
+          cancelHoverClose();
+          openFeeInfo();
+        };
+
+        feeToggle.addEventListener("mouseenter", showOnHover);
+        feeToggle.addEventListener("mouseleave", scheduleHoverClose);
+        feeToggle.addEventListener("focus", showOnHover);
+        feeToggle.addEventListener("blur", scheduleHoverClose);
+        feeInfo.addEventListener("mouseenter", cancelHoverClose);
+        feeInfo.addEventListener("mouseleave", scheduleHoverClose);
+      } else {
+        const onOutsideFeeInfoClick = (event) => {
+          if (feeInfo.contains(event.target) || feeToggle.contains(event.target)) return;
+          closeFeeInfo();
+          document.removeEventListener("click", onOutsideFeeInfoClick);
+        };
+
+        feeToggle.addEventListener("click", () => {
+          const expanded = feeToggle.getAttribute("aria-expanded") === "true";
+          if (expanded) {
+            closeFeeInfo();
+            document.removeEventListener("click", onOutsideFeeInfoClick);
+            return;
+          }
+          openFeeInfo();
+          document.addEventListener("click", onOutsideFeeInfoClick);
+        });
+      }
 
       // Appears once near the bottom of the page rather than on load, and
       // stays dismissed for the rest of the tab's session once closed.
