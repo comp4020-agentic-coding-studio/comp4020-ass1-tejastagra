@@ -117,6 +117,35 @@ the fund was diversified.
    outlier reveal every time, even when the same card wins twice in a row
    ([`a390818`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-tejastagra/commit/a390818)).
 
+9. **Rewriting the bubble chart's packing instead of tuning the old spiral**
+   --- the ranked-list-turned-bubble-chart had two real bugs: the dominant
+   circle could be wide enough to run off the viewport with its own label
+   clipped, and small circles could drift into overlapping it. Rather than
+   patch the existing spiral-search packing with after-the-fact overlap
+   checks, I replaced it with a shelf/row bin-packer (biggest circles first,
+   fixed row bands) so non-overlap follows from how it's built rather than
+   from a runtime fixup, and capped every radius at half the container's own
+   width so the largest circle can never exceed it. I also added a shared
+   minimum radius sized to the hardest-to-fit startup name, with area scaling
+   proportionally above that floor, so a return multiple near zero never
+   produces an illegible circle. Checked with a jsdom script driving a real
+   allocate-and-submit: the outlier's radius matched the computed cap
+   exactly, zero circles overlapped at rest before any drag, and none
+   exceeded the chart's own bounds
+   ([`e3545b8`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-tejastagra/commit/e3545b8)).
+
+10. **Adding drag with soft collision, not full physics** --- once circles
+    could be dragged, letting the visitor push the outlier onto a small
+    circle and leave them overlapping would undercut the whole point of the
+    chart. I used native Pointer Events (one code path for mouse and touch)
+    and a simple iterative push-apart pass that keeps the dragged circle
+    exactly under the pointer while nudging anything it overlaps clear,
+    rather than a full spring/velocity simulation, since the brief asked for
+    "soft collision, not full realism." Verified by scripting a pointer
+    drag against the built page and checking zero circles overlapped
+    afterwards
+    ([`e3545b8`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-tejastagra/commit/e3545b8)).
+
 ## Before you ship
 
 `pnpm check:evidence` verifies your citations resolve to real commits, that the
