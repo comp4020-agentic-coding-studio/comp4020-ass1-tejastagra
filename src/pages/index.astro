@@ -223,7 +223,7 @@ const STRATEGY_EXAMPLE = [
         <p class="payoff-compare"></p>
       </section>
 
-      <section class="breakdown">
+      <section class="breakdown" id="breakdown" hidden>
         <h2>Startup returns, ranked</h2>
         <p class="breakdown-caption">
           The same draw shown above, per startup, packed into circles sized by each one's return
@@ -426,6 +426,7 @@ const STRATEGY_EXAMPLE = [
       const returnEl = document.querySelector('[data-testid="fund-return"]');
       const compareEl = document.querySelector(".payoff-compare");
       const bubbleChart = document.getElementById("bubble-chart");
+      const breakdownSection = document.getElementById("breakdown");
       let bubbleChartState = null;
       const contributionChart = document.getElementById("contribution-chart");
       const contributionCaption = document.getElementById("contribution-chart-caption");
@@ -509,6 +510,7 @@ const STRATEGY_EXAMPLE = [
           cardReturns[i].textContent = "";
         });
         bubbleChart.innerHTML = "";
+        breakdownSection.hidden = true;
         bubbleChartState = null;
         dragCtx = null;
         returnEl.textContent = "";
@@ -1202,6 +1204,7 @@ const STRATEGY_EXAMPLE = [
           card.style.setProperty("--card-accent", isOutlier ? "var(--outlier-accent)" : "var(--border)");
         });
 
+        breakdownSection.hidden = false;
         renderBubbleChart(multiples);
 
         // Swaps the illustrative "one outlier carries the fund" chart for the
