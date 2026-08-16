@@ -1,8 +1,5 @@
 # Process overview
 
-A reading-guide to how the work came together --- a map to your process, not an
-essay about it.
-
 ## What I built
 
 The power law allocator: a visitor splits a fixed $10M fund across 15

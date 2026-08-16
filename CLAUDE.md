@@ -242,3 +242,11 @@ If a design decision is ambiguous, check with me before picking a direction (see
 ## Scope discipline
 
 Only implement what's explicitly asked. Don't add navigation elements, UI affordances, animations, or styling flourishes beyond the specific request, even if they seem like reasonable defaults. If something seems missing or worth adding, ask first rather than adding it.
+
+## Verify before accepting
+
+Before presenting any calculated or derived number as correct, verify what it actually represents against its real-world meaning, not just that a chart or figure changed visually. This session had two bugs that looked fine on screen but were wrong underneath: a comparison scenario pinned to a fixed array index rather than the value it claimed to represent, and a chart bucket hardcoded to never change while the others did. When adding or changing any calculation, trace through what it should mean, not just whether the UI updates.
+
+## Writing style: no "X, not Y"
+
+Do not use the "X, not Y" or "Y, not X" sentence construction (eg "it's about hindsight bias, not allocation being irrelevant"). This pattern shows up repeatedly and reads as stilted. Write plainly and directly instead.
