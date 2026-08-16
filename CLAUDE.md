@@ -238,3 +238,7 @@ If a design decision is ambiguous, check with me before picking a direction (see
 - No filler copy, no marketing tone. Direct, plain language throughout the UI text.
 - No Oxford commas, no em dashes anywhere in written copy.
 - UK English spelling (eg "visualise", "colour").
+
+## Scope discipline
+
+Only implement what's explicitly asked. Don't add navigation elements, UI affordances, animations, or styling flourishes beyond the specific request, even if they seem like reasonable defaults. If something seems missing or worth adding, ask first rather than adding it.
