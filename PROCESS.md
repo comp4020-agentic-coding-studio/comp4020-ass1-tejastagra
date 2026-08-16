@@ -146,6 +146,22 @@ the fund was diversified.
     afterwards
     ([`e3545b8`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-tejastagra/commit/e3545b8)).
 
+11. **Replacing the bubble chart's shelf-pack with a column layout after it
+    ballooned vertically** --- capping the dominant circle's radius at half
+    the *entire* container width meant its own row alone was roughly as tall
+    as the page was wide, so the chart collapsed into one narrow, very tall
+    column instead of spanning the page, however wide the viewport actually
+    was. I replaced the row-based shelf packer with a column-based (masonry)
+    layout: circles are capped to fit inside their own column rather than
+    half the whole page, and each new circle joins whichever column is
+    currently shortest, so the biggest circles land side by side across the
+    top and the chart genuinely uses the full width. Checked with a jsdom
+    script comparing the resulting chart's width-to-height ratio before and
+    after at three widths (350/1300/1920px): the height-to-width ratio
+    dropped from roughly 1.55–3.3 to 0.26–2.46, with zero overlapping
+    circles and none out of bounds at any width
+    ([`7524f00`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-tejastagra/commit/7524f00)).
+
 ## Before you ship
 
 `pnpm check:evidence` verifies your citations resolve to real commits, that the
