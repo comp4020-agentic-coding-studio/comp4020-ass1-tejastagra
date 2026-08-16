@@ -371,6 +371,21 @@ const STRATEGY_EXAMPLE = [
       </section>
     </main>
 
+    <aside class="author-panel" id="author-panel" aria-hidden="true">
+      <button type="button" class="author-panel-close" id="author-panel-close" aria-label="Dismiss">
+        &times;
+      </button>
+      <p>
+        Enjoyed reading this? The author of this piece,
+        <a href="https://www.linkedin.com/in/tejastagra" target="_blank" rel="noopener noreferrer"
+          >Tejas Tagra</a
+        >, also works in venture capital. Connect with him on
+        <a href="https://www.linkedin.com/in/tejastagra" target="_blank" rel="noopener noreferrer"
+          >LinkedIn</a
+        > for more insights like this.
+      </p>
+    </aside>
+
     <footer>
       <details class="info-panel">
         <summary>About this data</summary>
@@ -414,6 +429,7 @@ const STRATEGY_EXAMPLE = [
       const returnEl = document.querySelector('[data-testid="fund-return"]');
       const compareEl = document.querySelector(".payoff-compare");
       const bubbleChart = document.getElementById("bubble-chart");
+      let bubbleChartState = null;
       const contributionChart = document.getElementById("contribution-chart");
       const contributionCaption = document.getElementById("contribution-chart-caption");
       const strategyFills = Array.from(document.querySelectorAll("[data-strategy]"));
@@ -462,12 +478,15 @@ const STRATEGY_EXAMPLE = [
           slider.value = String(value);
           outputs[i].textContent = currency(value);
 
-          // The graphic (not the card box) scales and saturates a little with
-          // how much is invested in that startup, clipped inside the card's
-          // fixed-size header block so the grid never reflows.
-          const weight = Math.min(1, value / (FUND_TOTAL / 3));
-          cards[i].style.setProperty("--art-scale", (1 + weight * 0.25).toFixed(3));
-          cards[i].style.setProperty("--art-saturate", (1 + weight * 0.6).toFixed(3));
+          // The graphic (not the card box) scales and saturates with how much
+          // is invested, clipped inside the card's fixed-size header block so
+          // the grid never reflows. A fractional power curve (not linear)
+          // means the first click already reads as a visible jump, while $0
+          // stays calm and the full-fund case still lands at the top of the
+          // range.
+          const weight = Math.pow(value / FUND_TOTAL, 0.35);
+          cards[i].style.setProperty("--art-scale", (1 + weight * 0.6).toFixed(3));
+          cards[i].style.setProperty("--art-saturate", (1 + weight * 1.2).toFixed(3));
         });
 
         remainingEl.textContent = `Remaining: ${currency(left)}`;
@@ -493,132 +512,285 @@ const STRATEGY_EXAMPLE = [
           cardReturns[i].textContent = "";
         });
         bubbleChart.innerHTML = "";
+        bubbleChartState = null;
+        dragCtx = null;
         returnEl.textContent = "";
         compareEl.textContent = "";
       }
 
-      // Packs circles by placing the largest first, then scanning an
-      // outward spiral of candidate points for each smaller one and taking
-      // the first spot that doesn't overlap anything already placed. Not a
-      // proper physics simulation, just enough to read as a bubble chart.
-      function packCircles(circles) {
-        const sorted = [...circles].sort((a, b) => b.r - a.r);
-        const placed = [];
-        sorted.forEach((c, i) => {
-          if (i === 0) {
-            placed.push({ ...c, x: 0, y: 0 });
-            return;
-          }
-          const angleStep = (Math.PI * 2) / 48;
-          let x = 0;
-          let y = 0;
-          let found = false;
-          for (let ring = 1; ring < 500 && !found; ring++) {
-            const dist = ring * 3;
-            for (let a = 0; a < Math.PI * 2 && !found; a += angleStep) {
-              const px = Math.cos(a) * dist;
-              const py = Math.sin(a) * dist;
-              const overlaps = placed.some((p) => Math.hypot(p.x - px, p.y - py) < p.r + c.r - 1);
-              if (!overlaps) {
-                x = px;
-                y = py;
-                found = true;
-              }
-            }
-          }
-          placed.push({ ...c, x, y });
-        });
-        return placed;
+      // Text metrics for sizing circles so a startup's name and multiple
+      // always fit without truncation, however small its return is.
+      const bubbleMeasureCtx = document.createElement("canvas").getContext("2d");
+      const NAME_FONT = 12;
+      const MULT_FONT = 10.5;
+      const LABEL_PAD = 6;
+
+      function measureLineWidth(ctx, text, fontPx) {
+        ctx.font = `${fontPx}px system-ui, sans-serif`;
+        return ctx.measureText(text).width;
       }
 
-      function fitLabel(name, r, fontSize) {
-        const maxChars = Math.max(3, Math.floor((r * 1.7) / (fontSize * 0.56)));
-        return name.length > maxChars ? `${name.slice(0, maxChars - 1)}…` : name;
+      // Stacks the given lines centred vertically around 0 and returns each
+      // line's vertical offset (dy) alongside the block's total height.
+      function layoutLines(lines) {
+        const heights = lines.map((l) => l.fontSize * 1.25);
+        const totalHeight = heights.reduce((a, b) => a + b, 0);
+        let cursor = -totalHeight / 2;
+        const placed = lines.map((l, i) => {
+          const lh = heights[i];
+          const dy = cursor + lh / 2;
+          cursor += lh;
+          return { ...l, dy };
+        });
+        return { lines: placed, totalHeight };
+      }
+
+      // Tries the name on one line, then every two-line word-wrap split, and
+      // keeps whichever needs the smallest circle to hold it without
+      // truncation — that smallest-possible radius is this startup's
+      // legibility floor.
+      function computeLabel(ctx, name, multipleText) {
+        const words = name.split(" ");
+        const nameLineOptions = [[name]];
+        for (let k = 1; k < words.length; k++) {
+          nameLineOptions.push([words.slice(0, k).join(" "), words.slice(k).join(" ")]);
+        }
+
+        let best = null;
+        nameLineOptions.forEach((nameLines) => {
+          const rawLines = [
+            ...nameLines.map((text) => ({ text, className: "bubble-label-name", fontSize: NAME_FONT })),
+            { text: multipleText, className: "bubble-label-multiple", fontSize: MULT_FONT },
+          ];
+          const { lines, totalHeight } = layoutLines(rawLines);
+          const maxWidth = Math.max(...lines.map((l) => measureLineWidth(ctx, l.text, l.fontSize)));
+          const r = Math.hypot(maxWidth / 2, totalHeight / 2) + LABEL_PAD;
+          if (!best || r < best.r) best = { lines, r };
+        });
+        return best;
+      }
+
+      // Shelf-packs circles largest-first into rows: each row is centred and
+      // as wide as the container, so the biggest circles land in the top
+      // rows and smaller ones settle lower, with no overlap possible since
+      // every row occupies its own vertical band.
+      function packCirclesTopDown(items, width, pad, gap) {
+        let cursorX = pad;
+        let cursorY = pad;
+        let rowMaxR = 0;
+        let rowStart = 0;
+        let rowHasItem = false;
+        const positioned = [];
+
+        function closeRow(rowEndX) {
+          if (!rowHasItem) return;
+          const rowWidth = rowEndX - pad;
+          const offset = Math.max(0, (width - pad * 2 - rowWidth) / 2);
+          for (let i = rowStart; i < positioned.length; i++) positioned[i].x += offset;
+        }
+
+        items.forEach((item) => {
+          const need = item.r * 2;
+          if (rowHasItem && cursorX + gap + need > width - pad) {
+            closeRow(cursorX);
+            cursorY += rowMaxR * 2 + gap;
+            cursorX = pad;
+            rowMaxR = 0;
+            rowStart = positioned.length;
+            rowHasItem = false;
+          }
+          if (rowHasItem) cursorX += gap;
+          if (!rowHasItem) rowMaxR = item.r;
+          item.x = cursorX + item.r;
+          item.y = cursorY + rowMaxR;
+          positioned.push(item);
+          cursorX += need;
+          rowHasItem = true;
+        });
+        closeRow(cursorX);
+        const height = cursorY + rowMaxR * 2 + pad;
+        return { height };
       }
 
       // Draws each startup as a circle whose area is proportional to its
-      // return multiple, so one dominant circle among many tiny ones makes
-      // the power-law point visible at a glance instead of a scanned list.
+      // return multiple above a shared legibility floor, so one dominant
+      // circle among many small (but still readable) ones makes the
+      // power-law point visible at a glance instead of a scanned list.
       function renderBubbleChart(multiples) {
-        const RADIUS_MIN = 9;
-        const RADIUS_MAX = 150;
+        const svgNS = "http://www.w3.org/2000/svg";
+        const width = Math.max(240, bubbleChart.clientWidth || 800);
+        const pad = 20;
+        const gap = 8;
+        // The dominant circle is capped so it — and its label — always fits
+        // inside the chart's own width, never spilling past the viewport.
+        const rMax = Math.max(50, width / 2 - pad);
+
+        const labels = multiples.map((m, i) => computeLabel(bubbleMeasureCtx, STARTUP_NAMES[i], `${m.toFixed(2)}x`));
+        const radiusFloor = Math.min(rMax, Math.max(...labels.map((l) => l.r)));
+
         const maxMultiple = Math.max(...multiples);
-        const k = RADIUS_MAX / Math.sqrt(maxMultiple || 1);
+        const extraSpan = Math.max(0, rMax * rMax - radiusFloor * radiusFloor);
+        const areaSlope = maxMultiple > 0 ? extraSpan / maxMultiple : 0;
 
         const circles = multiples.map((multiple, i) => ({
+          index: i,
           name: STARTUP_NAMES[i],
           multiple,
-          r: Math.max(RADIUS_MIN, k * Math.sqrt(multiple)),
+          label: labels[i],
+          r: Math.min(rMax, Math.sqrt(radiusFloor * radiusFloor + areaSlope * multiple)),
         }));
 
-        const packed = packCircles(circles);
-        const pad = 24;
-        const minX = Math.min(...packed.map((p) => p.x - p.r));
-        const maxX = Math.max(...packed.map((p) => p.x + p.r));
-        const minY = Math.min(...packed.map((p) => p.y - p.r));
-        const maxY = Math.max(...packed.map((p) => p.y + p.r));
+        const sorted = [...circles].sort((a, b) => b.r - a.r);
+        const { height } = packCirclesTopDown(sorted, width, pad, gap);
 
-        const svgNS = "http://www.w3.org/2000/svg";
-        bubbleChart.innerHTML = "";
         const svg = document.createElementNS(svgNS, "svg");
-        svg.setAttribute(
-          "viewBox",
-          `${minX - pad} ${minY - pad} ${maxX - minX + pad * 2} ${maxY - minY + pad * 2}`,
-        );
+        svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+        svg.setAttribute("width", String(width));
+        svg.setAttribute("height", String(height));
         svg.setAttribute("role", "img");
         svg.setAttribute(
           "aria-label",
-          "Circle-packing chart: each circle's area is the startup's return multiple, and the biggest circle dominates the fund's return.",
+          "Circle-packing chart, draggable: each circle's area is the startup's return multiple, and the biggest circle dominates the fund's return.",
         );
 
-        packed.forEach((c) => {
+        const items = Array.from({ length: circles.length });
+        circles.forEach((c) => {
           const isOutlier = c.multiple === maxMultiple;
           const g = document.createElementNS(svgNS, "g");
           g.setAttribute("class", isOutlier ? "bubble bubble-outlier" : "bubble");
+          g.dataset.index = String(c.index);
 
-          const circle = document.createElementNS(svgNS, "circle");
-          circle.setAttribute("cx", String(c.x));
-          circle.setAttribute("cy", String(c.y));
-          circle.setAttribute("r", String(c.r));
-          g.appendChild(circle);
+          const circleEl = document.createElementNS(svgNS, "circle");
+          circleEl.setAttribute("cx", String(c.x));
+          circleEl.setAttribute("cy", String(c.y));
+          circleEl.setAttribute("r", String(c.r));
+          g.appendChild(circleEl);
 
           const title = document.createElementNS(svgNS, "title");
           title.textContent = `${c.name}: ${c.multiple.toFixed(2)}x`;
           g.appendChild(title);
 
-          if (c.r >= 40) {
-            const fontSize = Math.max(9, Math.min(22, c.r * 0.28));
-            const nameText = document.createElementNS(svgNS, "text");
-            nameText.setAttribute("x", String(c.x));
-            nameText.setAttribute("y", String(c.y - fontSize * 0.35));
-            nameText.setAttribute("class", "bubble-label-name");
-            nameText.setAttribute("font-size", String(fontSize));
-            nameText.textContent = fitLabel(c.name, c.r, fontSize);
-            g.appendChild(nameText);
-
-            const multipleText = document.createElementNS(svgNS, "text");
-            multipleText.setAttribute("x", String(c.x));
-            multipleText.setAttribute("y", String(c.y + fontSize * 0.9));
-            multipleText.setAttribute("class", "bubble-label-multiple");
-            multipleText.setAttribute("font-size", String(fontSize * 0.85));
-            multipleText.textContent = `${c.multiple.toFixed(2)}x`;
-            g.appendChild(multipleText);
-          } else if (c.r >= 16) {
-            const fontSize = Math.max(8, Math.min(14, c.r * 0.5));
-            const multipleText = document.createElementNS(svgNS, "text");
-            multipleText.setAttribute("x", String(c.x));
-            multipleText.setAttribute("y", String(c.y + fontSize * 0.32));
-            multipleText.setAttribute("class", "bubble-label-multiple");
-            multipleText.setAttribute("font-size", String(fontSize));
-            multipleText.textContent = `${c.multiple.toFixed(1)}x`;
-            g.appendChild(multipleText);
-          }
+          const labelEls = c.label.lines.map((line) => {
+            const textEl = document.createElementNS(svgNS, "text");
+            textEl.setAttribute("x", String(c.x));
+            textEl.setAttribute("y", String(c.y + line.dy));
+            textEl.setAttribute("class", line.className);
+            textEl.setAttribute("font-size", String(line.fontSize));
+            textEl.textContent = line.text;
+            g.appendChild(textEl);
+            return { el: textEl, dy: line.dy };
+          });
 
           svg.appendChild(g);
+          items[c.index] = { el: circleEl, r: c.r, x: c.x, y: c.y, labelEls };
         });
 
+        bubbleChart.innerHTML = "";
         bubbleChart.appendChild(svg);
+        bubbleChartState = { items, width, height, pad };
       }
+
+      // Dragging: a soft, non-physical collision pass so the grabbed circle
+      // always follows the pointer exactly, while any circle it's dragged
+      // into gets pushed clear (and circles never overlap each other either).
+      let dragCtx = null;
+
+      function chartPointFromEvent(svg, event) {
+        const rect = svg.getBoundingClientRect();
+        const scale = bubbleChartState.width / rect.width;
+        return { x: (event.clientX - rect.left) * scale, y: (event.clientY - rect.top) * scale };
+      }
+
+      function resolveBubbleCollisions(items, draggedIndex, width, height, pad) {
+        for (let iter = 0; iter < 4; iter++) {
+          for (let i = 0; i < items.length; i++) {
+            for (let j = i + 1; j < items.length; j++) {
+              const a = items[i];
+              const b = items[j];
+              const dx = b.x - a.x;
+              const dy = b.y - a.y;
+              const dist = Math.hypot(dx, dy) || 0.01;
+              const minDist = a.r + b.r;
+              if (dist >= minDist) continue;
+              const overlap = minDist - dist;
+              const nx = dx / dist;
+              const ny = dy / dist;
+              const aFixed = i === draggedIndex;
+              const bFixed = j === draggedIndex;
+              if (aFixed && !bFixed) {
+                b.x += nx * overlap;
+                b.y += ny * overlap;
+              } else if (bFixed && !aFixed) {
+                a.x -= nx * overlap;
+                a.y -= ny * overlap;
+              } else if (!aFixed && !bFixed) {
+                a.x -= nx * overlap * 0.5;
+                a.y -= ny * overlap * 0.5;
+                b.x += nx * overlap * 0.5;
+                b.y += ny * overlap * 0.5;
+              }
+            }
+          }
+          items.forEach((c, idx) => {
+            if (idx === draggedIndex) return;
+            c.x = Math.min(width - pad - c.r, Math.max(pad + c.r, c.x));
+            c.y = Math.min(height - pad - c.r, Math.max(pad + c.r, c.y));
+          });
+        }
+      }
+
+      function applyBubblePositions() {
+        bubbleChartState.items.forEach((item) => {
+          item.el.setAttribute("cx", String(item.x));
+          item.el.setAttribute("cy", String(item.y));
+          item.labelEls.forEach(({ el, dy }) => {
+            el.setAttribute("x", String(item.x));
+            el.setAttribute("y", String(item.y + dy));
+          });
+        });
+      }
+
+      function onBubblePointerDown(event) {
+        if (!bubbleChartState) return;
+        const g = event.target.closest(".bubble");
+        if (!g) return;
+        const svg = bubbleChart.querySelector("svg");
+        const point = chartPointFromEvent(svg, event);
+        const index = Number(g.dataset.index);
+        const item = bubbleChartState.items[index];
+        dragCtx = { index, offsetX: point.x - item.x, offsetY: point.y - item.y, g };
+        g.classList.add("bubble-dragging");
+        g.setPointerCapture(event.pointerId);
+        event.preventDefault();
+      }
+
+      function onBubblePointerMove(event) {
+        if (!dragCtx || !bubbleChartState) return;
+        const svg = bubbleChart.querySelector("svg");
+        const point = chartPointFromEvent(svg, event);
+        const { items, width, height, pad } = bubbleChartState;
+        const item = items[dragCtx.index];
+        item.x = Math.min(width - pad - item.r, Math.max(pad + item.r, point.x - dragCtx.offsetX));
+        item.y = Math.min(height - pad - item.r, Math.max(pad + item.r, point.y - dragCtx.offsetY));
+        resolveBubbleCollisions(items, dragCtx.index, width, height, pad);
+        applyBubblePositions();
+      }
+
+      function onBubblePointerUp(event) {
+        if (!dragCtx) return;
+        dragCtx.g.classList.remove("bubble-dragging");
+        try {
+          dragCtx.g.releasePointerCapture(event.pointerId);
+        } catch {
+          // capture already released, nothing to do
+        }
+        dragCtx = null;
+      }
+
+      bubbleChart.addEventListener("pointerdown", onBubblePointerDown);
+      bubbleChart.addEventListener("pointermove", onBubblePointerMove);
+      bubbleChart.addEventListener("pointerup", onBubblePointerUp);
+      bubbleChart.addEventListener("pointercancel", onBubblePointerUp);
 
       function setAllocation(index, rawValue) {
         const left = remaining();
@@ -665,6 +837,43 @@ const STRATEGY_EXAMPLE = [
         const expanded = feeToggle.getAttribute("aria-expanded") === "true";
         feeToggle.setAttribute("aria-expanded", String(!expanded));
         feeInfo.hidden = expanded;
+      });
+
+      // Appears once near the bottom of the page rather than on load, and
+      // stays dismissed for the rest of the tab's session once closed.
+      const authorPanel = document.getElementById("author-panel");
+      const authorPanelClose = document.getElementById("author-panel-close");
+      const AUTHOR_PANEL_DISMISSED_KEY = "author-panel-dismissed";
+
+      function isAuthorPanelDismissed() {
+        try {
+          return sessionStorage.getItem(AUTHOR_PANEL_DISMISSED_KEY) === "1";
+        } catch {
+          return false;
+        }
+      }
+
+      function checkAuthorPanelScroll() {
+        if (isAuthorPanelDismissed()) return;
+        const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+        const scrolled = scrollable > 0 ? window.scrollY / scrollable : 0;
+        const nearBottom = scrolled >= 0.8;
+        authorPanel.classList.toggle("author-panel-visible", nearBottom);
+        authorPanel.setAttribute("aria-hidden", nearBottom ? "false" : "true");
+      }
+
+      window.addEventListener("scroll", checkAuthorPanelScroll, { passive: true });
+      checkAuthorPanelScroll();
+
+      authorPanelClose.addEventListener("click", () => {
+        authorPanel.classList.remove("author-panel-visible");
+        authorPanel.setAttribute("aria-hidden", "true");
+        try {
+          sessionStorage.setItem(AUTHOR_PANEL_DISMISSED_KEY, "1");
+        } catch {
+          // sessionStorage unavailable (e.g. privacy mode) — dismissal just
+          // won't persist across a reload, still works for this page view.
+        }
       });
 
       // Modelled Pareto approximation, calibrated against the aggregate shape
