@@ -83,7 +83,7 @@ h1 {
   z-index: 10;
   background: var(--bg);
   padding-bottom: 1.5rem;
-  transform: translateZ(0);
+  mask-image: linear-gradient(to bottom, black calc(100% - 1.5rem), transparent 100%);
 }
 
 .remaining-bar {
