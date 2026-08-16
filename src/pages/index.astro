@@ -135,7 +135,7 @@ const OUTCOME_BUCKETS = [
   { label: "10x or more", value: 3 },
 ];
 
-const CONTRIBUTION_EXAMPLE = [78, 9, 5, 3, 2, 1, 1, 1, 1, 1, 1, 1];
+const CONTRIBUTION_EXAMPLE = [70, 7, 5, 4, 3, 2, 2, 1.5, 1.5, 1, 1, 0.8, 0.7, 0.3, 0.2];
 
 const STRATEGY_EXAMPLE = [
   { label: "One concentrated bet", value: 1.3 },
@@ -158,12 +158,21 @@ const STRATEGY_EXAMPLE = [
       </nav>
     </header>
     <main>
+      <p class="eyebrow">A venture fund investment simulator</p>
       <h1>The power law allocator</h1>
+      <p class="intro">
+        A "venture fund" is a pool of money that professional investors put into young,
+        unproven companies ("startups") in exchange for a stake in each one. Most startups fail
+        or barely survive. A venture fund makes money anyway, because occasionally one of its
+        startups becomes huge, and that single success pays for all the failures many times
+        over. This page walks through how that actually plays out. You play fund manager: split
+        a fixed pool of money across {STARTUP_COUNT} startups, then see what comes back.
+      </p>
       <p class="framing">
         This fund raised ${RAISED_TOTAL.toLocaleString("en-AU")}. Fees take about 20% over its
         life. That leaves <strong data-testid="fund-total">${FUND_TOTAL.toLocaleString("en-AU")}</strong> to
-        invest in {STARTUP_COUNT} startups. However you split it, one outlier decides almost all
-        of your return.
+        invest in {STARTUP_COUNT} startups. However you split it, one outlier (a single
+        startup that returns far more than the rest) decides almost all of your return.
         <button type="button" class="info-toggle" id="fee-info-toggle" aria-expanded="false" aria-controls="fee-info">
           Why only 80%?
         </button>
@@ -183,7 +192,7 @@ const STRATEGY_EXAMPLE = [
           Remaining: ${FUND_TOTAL.toLocaleString("en-AU")}
         </p>
         <p class="allocation-prompt" aria-live="polite">
-          Allocate the full ${FUND_TOTAL.toLocaleString("en-AU")} to continue.
+          Invest the full ${FUND_TOTAL.toLocaleString("en-AU")} to continue.
         </p>
       </div>
 
@@ -243,7 +252,7 @@ const STRATEGY_EXAMPLE = [
           }
         </ul>
 
-        <button type="submit" data-testid="allocate-submit" class="allocate-button">Allocate</button>
+        <button type="submit" data-testid="allocate-submit" class="allocate-button">Invest</button>
       </form>
 
       <section class="payoff">
@@ -262,29 +271,54 @@ const STRATEGY_EXAMPLE = [
 
       <section class="explainer">
         <h2>How the power law works</h2>
+        <p class="explainer-intro">
+          A "return multiple" is what a fund gets back for every dollar it invests: a 2x means
+          the money doubled, a 0.3x means most of it was lost. A "power law" here just means
+          that a few results are enormously bigger than all the rest put together, rather than
+          outcomes clustering around an average. Venture funds live and die by that one fact.
+        </p>
 
         <div class="explainer-step">
           <div class="explainer-text">
             <h3>Most bets return less than they cost</h3>
             <p>
               Across a large number of venture deals, most return less than the money put in.
-              A modest share do well. Only a small slice return ten times or more. The chart
-              below is an illustrative example of that shape, not this run's result.
+              A modest share do well. Only a small slice return ten times or more. Statisticians
+              call this shape "fat-tailed": a lot of small losses, and a few enormous wins far
+              out in the "tail" of the distribution. It is the reason a single startup can end
+              up mattering more than the other fourteen in this fund combined.
+            </p>
+            <p>
+              "Tail heaviness" describes how extreme those rare wins are. A low tail means the
+              biggest winners are only modestly larger than everything else. A high tail means
+              almost every startup fails or breaks even, but the rare one that works pays back
+              dozens of times its cost, which is closer to how real venture returns behave. Drag
+              the slider to move from a low tail to a high tail and watch the bars reshape: the
+              loss and modest-return bars shrink while the rare, huge-return bar grows. This is
+              an illustrative model, not a measurement of real deals.
             </p>
           </div>
           <div class="explainer-diagram">
-            <div class="bar-chart">
+            <div class="bar-chart" id="tail-bar-chart">
               {
-                OUTCOME_BUCKETS.map((bucket) => (
+                OUTCOME_BUCKETS.map((bucket, i) => (
                   <div class="bar-chart-item">
                     <div class="bar-chart-track">
-                      <div class="bar-chart-fill" style={`height:${bucket.value}%;`} />
+                      <div class="bar-chart-fill" data-bucket={i} style={`height:${bucket.value}%;`} />
                     </div>
                     <p class="bar-chart-label">{bucket.label}</p>
-                    <p class="bar-chart-value">{bucket.value}%</p>
+                    <p class="bar-chart-value" data-bucket-value={i}>{bucket.value}%</p>
                   </div>
                 ))
               }
+            </div>
+            <label class="tail-slider-label" for="tail-slider">
+              Tail heaviness: <span id="tail-slider-value">mild</span>
+            </label>
+            <input type="range" id="tail-slider" min="0" max="100" value="0" step="1" />
+            <div class="tail-slider-scale">
+              <span>Mild</span>
+              <span>Extreme</span>
             </div>
           </div>
         </div>
@@ -293,13 +327,18 @@ const STRATEGY_EXAMPLE = [
           <div class="explainer-text">
             <h3>One outlier carries the fund</h3>
             <p>
-              Rank a fund's startups by how much they contribute to the total return. In a
-              typical outcome, one of them accounts for most of it and the rest barely
-              register. This example ranks twelve startups by contribution.
+              Rank a fund's startups by how much each one contributes to the total money
+              returned. In a typical outcome, one of them accounts for most of it and the rest
+              barely register, a single "outlier" carrying the whole fund.
+            </p>
+            <p id="contribution-caption">
+              This example ranks {STARTUP_COUNT} illustrative startups by contribution: the
+              tallest bar alone is worth more than all the others combined. Invest your own fund
+              above and this chart will switch to showing your actual result instead.
             </p>
           </div>
           <div class="explainer-diagram">
-            <div class="bar-chart bar-chart-tight">
+            <div class="bar-chart bar-chart-tight" id="contribution-chart">
               {
                 CONTRIBUTION_EXAMPLE.map((value) => (
                   <div class="bar-chart-item">
@@ -310,7 +349,7 @@ const STRATEGY_EXAMPLE = [
                 ))
               }
             </div>
-            <p class="bar-chart-caption">Share of total fund return, by startup rank</p>
+            <p class="bar-chart-caption" id="contribution-chart-caption">Share of total fund return, by startup rank (illustrative example)</p>
           </div>
         </div>
 
@@ -323,6 +362,12 @@ const STRATEGY_EXAMPLE = [
               number regardless. This example shows one illustrative draw applied to three
               different allocations. Use the allocator above to see it happen with your own
               numbers.
+            </p>
+            <p>
+              The reason is not that diversifying is pointless, it is that no allocation can
+              tell you in advance which startup will be the outlier. Spreading money around
+              lowers the chance of missing it entirely, it does not lower how much that one
+              company decides the outcome once the draw is made.
             </p>
           </div>
           <div class="explainer-diagram">
@@ -350,16 +395,31 @@ const STRATEGY_EXAMPLE = [
         <p>
           Returns in the allocator above are a modelled Pareto approximation, not real fund or
           startup data. Parameters are set so most outcomes land near or below 1x with a small
-          chance of a 10x+ outlier, broadly matching the aggregate pattern in Correlation
-          Ventures' venture outcomes analysis (around two-thirds of financings return below 1x;
-          a small share return 10x or more). The diagrams in "How the power law works" above are
-          illustrative examples built to show that same shape, not measurements of this run.
+          chance of a 10x+ outlier, broadly matching the aggregate pattern Correlation Ventures
+          found across roughly 21,000 US venture financings from 2004 to 2013: around
+          two-thirds returned less than the capital invested, and only around 4% returned more
+          than 10 times the money. See
+          <a href="https://arxiv.org/pdf/2303.11013" target="_blank" rel="noopener noreferrer">
+            Awate, "Power-Law Distribution in Venture Capital Returns" (arXiv, 2023)</a>, which
+          cites the original Correlation Ventures studies and uses the same shape to parameterise
+          a power-law model. The diagrams in "How the power law works" above are illustrative
+          examples built to show that same shape, not measurements of this run, except the "One
+          outlier carries the fund" chart, which switches to your own result once you invest.
           Startup names, descriptions and icons are fictional, for illustration only.
         </p>
       </details>
     </footer>
 
-    <script is:inline define:vars={{ FUND_TOTAL, STARTUP_COUNT, STEP, STARTUP_NAMES: startups.map((s) => s.name) }}>
+    <script
+      is:inline
+      define:vars={{
+        FUND_TOTAL,
+        STARTUP_COUNT,
+        STEP,
+        STARTUP_NAMES: startups.map((s) => s.name),
+        STARTUP_COLORS: startups.map((s) => ({ bg: s.bg, accent: s.accent })),
+      }}
+    >
       const sliders = Array.from(document.querySelectorAll('[data-testid="allocation-slider"]'));
       const outputs = sliders.map((slider) => document.getElementById(`value-${slider.id.split("-")[1]}`));
       const cards = Array.from(document.querySelectorAll(".startup-card"));
@@ -370,6 +430,8 @@ const STRATEGY_EXAMPLE = [
       const returnEl = document.querySelector('[data-testid="fund-return"]');
       const compareEl = document.querySelector(".payoff-compare");
       const breakdownList = document.getElementById("breakdown-list");
+      const contributionChart = document.getElementById("contribution-chart");
+      const contributionCaption = document.getElementById("contribution-chart-caption");
       const form = document.getElementById("allocator-form");
       const randomiseButton = document.getElementById("randomise-button");
       const feeToggle = document.getElementById("fee-info-toggle");
@@ -419,13 +481,28 @@ const STRATEGY_EXAMPLE = [
         submitButton.disabled = !fullyAllocated;
         promptEl.textContent = fullyAllocated
           ? ""
-          : `Allocate the full ${currency(FUND_TOTAL)} to continue.`;
+          : `Invest the full ${currency(FUND_TOTAL)} to continue.`;
+      }
+
+      // Gives each card back its own colour and clears the last draw's result,
+      // since a fresh allocation invalidates the last outcome shown.
+      function resetCardColors() {
+        cards.forEach((card, i) => {
+          card.style.background = STARTUP_COLORS[i].bg;
+          card.style.setProperty("--card-accent", STARTUP_COLORS[i].accent);
+          card.classList.remove("startup-card-outlier");
+          cardReturns[i].textContent = "";
+        });
+        breakdownList.innerHTML = "";
+        returnEl.textContent = "";
+        compareEl.textContent = "";
       }
 
       function setAllocation(index, rawValue) {
         const left = remaining();
         const cap = allocations[index] + left;
         allocations[index] = Math.max(0, Math.min(cap, rawValue));
+        resetCardColors();
         render();
       }
 
@@ -442,10 +519,16 @@ const STRATEGY_EXAMPLE = [
       });
 
       randomiseButton.addEventListener("click", () => {
+        // Randomise in whole $100k units, the same step the +/- buttons use,
+        // so every random split lands on the same increments a visitor could
+        // reach by hand.
+        const totalUnits = FUND_TOTAL / STEP;
         const weights = allocations.map(() => Math.random());
         const weightTotal = weights.reduce((a, b) => a + b, 0);
-        const scaled = weights.map((w) => (w / weightTotal) * FUND_TOTAL);
-        allocations = largestRemainderRound(scaled, FUND_TOTAL);
+        const scaledUnits = weights.map((w) => (w / weightTotal) * totalUnits);
+        const roundedUnits = largestRemainderRound(scaledUnits, totalUnits);
+        allocations = roundedUnits.map((units) => units * STEP);
+        resetCardColors();
         render();
       });
 
@@ -501,10 +584,16 @@ const STRATEGY_EXAMPLE = [
 
         // Per-startup draws: shows which single company actually drove the
         // fund-level number above, rather than leaving the mechanism hidden.
+        // Cards converge to the same neutral colour once allocated, since the
+        // point is that the split itself doesn't set the outcome apart, only
+        // the outlier does — so only that one card stays distinct.
         const outlierIndex = multiples.indexOf(Math.max(...multiples));
         cards.forEach((card, i) => {
           cardReturns[i].textContent = `Returned ${multiples[i].toFixed(2)}x`;
-          card.classList.toggle("startup-card-outlier", i === outlierIndex);
+          const isOutlier = i === outlierIndex;
+          card.classList.toggle("startup-card-outlier", isOutlier);
+          card.style.background = isOutlier ? "var(--outlier-bg)" : "var(--surface)";
+          card.style.setProperty("--card-accent", isOutlier ? "var(--outlier-accent)" : "var(--border)");
         });
 
         const ranked = multiples
@@ -519,9 +608,56 @@ const STRATEGY_EXAMPLE = [
           item.innerHTML = `<span class="breakdown-name">${entry.name}</span><span class="breakdown-multiple">${entry.multiple.toFixed(2)}x</span>`;
           breakdownList.appendChild(item);
         });
+
+        // Swaps the illustrative "one outlier carries the fund" chart for the
+        // visitor's own result, since a live number makes the point better
+        // than a static example once one is available.
+        const dollarReturns = allocations.map((amount, i) => amount * multiples[i]);
+        const totalDollarReturn = dollarReturns.reduce((a, b) => a + b, 0);
+        const shares =
+          totalDollarReturn > 0
+            ? dollarReturns.map((value) => (value / totalDollarReturn) * 100).sort((a, b) => b - a)
+            : dollarReturns.map(() => 0);
+
+        contributionChart.innerHTML = "";
+        shares.forEach((share) => {
+          const item = document.createElement("div");
+          item.className = "bar-chart-item";
+          item.innerHTML = `<div class="bar-chart-track"><div class="bar-chart-fill" style="height:${share}%;"></div></div>`;
+          contributionChart.appendChild(item);
+        });
+        contributionCaption.textContent = "Share of your fund's actual return, by startup rank";
       });
 
       render();
+
+      // Tail-heaviness slider for the explainer diagram: reshapes the four
+      // illustrative bucket percentages so they always sum to 100, from the
+      // static low-tail values up to a much fatter tail at the high end.
+      const tailSlider = document.getElementById("tail-slider");
+      const tailSliderValue = document.getElementById("tail-slider-value");
+      const tailFills = Array.from(document.querySelectorAll("[data-bucket]"));
+      const tailValues = Array.from(document.querySelectorAll("[data-bucket-value]"));
+
+      function tailBuckets(t) {
+        return [65 - 30 * t, 25 - 5 * t, 7, 3 + 35 * t];
+      }
+
+      function updateTailSlider() {
+        const t = Number(tailSlider.value) / 100;
+        const buckets = tailBuckets(t);
+        tailFills.forEach((fill, i) => {
+          fill.style.height = `${buckets[i]}%`;
+        });
+        tailValues.forEach((el, i) => {
+          el.textContent = `${Math.round(buckets[i])}%`;
+        });
+        tailSliderValue.textContent = t < 0.34 ? "mild" : t < 0.67 ? "heavy" : "extreme";
+        tailSlider.style.background = `linear-gradient(to right, var(--accent) ${t * 100}%, var(--track) ${t * 100}%)`;
+      }
+
+      tailSlider.addEventListener("input", updateTailSlider);
+      updateTailSlider();
     </script>
   </body>
 </html>
