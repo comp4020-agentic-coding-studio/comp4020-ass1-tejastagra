@@ -229,10 +229,11 @@ const STRATEGY_EXAMPLE = [
       <section class="breakdown">
         <h2>Startup returns, ranked</h2>
         <p class="breakdown-caption">
-          The same draw shown above, per startup. Whichever one lands at the top is what decided
-          your fund's return, not how you split the money.
+          The same draw shown above, per startup, packed into circles sized by each one's return
+          multiple. Whichever circle dominates the picture is what decided your fund's return,
+          not how you split the money.
         </p>
-        <ol class="breakdown-list" id="breakdown-list"></ol>
+        <div class="bubble-chart" id="bubble-chart"></div>
       </section>
 
       <section class="explainer" id="explainer">
@@ -412,7 +413,7 @@ const STRATEGY_EXAMPLE = [
       const submitButton = document.querySelector('[data-testid="allocate-submit"]');
       const returnEl = document.querySelector('[data-testid="fund-return"]');
       const compareEl = document.querySelector(".payoff-compare");
-      const breakdownList = document.getElementById("breakdown-list");
+      const bubbleChart = document.getElementById("bubble-chart");
       const contributionChart = document.getElementById("contribution-chart");
       const contributionCaption = document.getElementById("contribution-chart-caption");
       const strategyFills = Array.from(document.querySelectorAll("[data-strategy]"));
@@ -460,6 +461,13 @@ const STRATEGY_EXAMPLE = [
           slider.max = String(cap);
           slider.value = String(value);
           outputs[i].textContent = currency(value);
+
+          // The graphic (not the card box) scales and saturates a little with
+          // how much is invested in that startup, clipped inside the card's
+          // fixed-size header block so the grid never reflows.
+          const weight = Math.min(1, value / (FUND_TOTAL / 3));
+          cards[i].style.setProperty("--art-scale", (1 + weight * 0.25).toFixed(3));
+          cards[i].style.setProperty("--art-saturate", (1 + weight * 0.6).toFixed(3));
         });
 
         remainingEl.textContent = `Remaining: ${currency(left)}`;
@@ -479,12 +487,137 @@ const STRATEGY_EXAMPLE = [
         cards.forEach((card, i) => {
           card.style.setProperty("--card-accent", STARTUP_ACCENTS[i]);
           card.classList.remove("startup-card-outlier");
-          card.querySelector(".card-header").classList.remove("card-header-dimmed");
+          const header = card.querySelector(".card-header");
+          header.classList.remove("card-header-dimmed");
+          header.classList.remove("card-header-pulse");
           cardReturns[i].textContent = "";
         });
-        breakdownList.innerHTML = "";
+        bubbleChart.innerHTML = "";
         returnEl.textContent = "";
         compareEl.textContent = "";
+      }
+
+      // Packs circles by placing the largest first, then scanning an
+      // outward spiral of candidate points for each smaller one and taking
+      // the first spot that doesn't overlap anything already placed. Not a
+      // proper physics simulation, just enough to read as a bubble chart.
+      function packCircles(circles) {
+        const sorted = [...circles].sort((a, b) => b.r - a.r);
+        const placed = [];
+        sorted.forEach((c, i) => {
+          if (i === 0) {
+            placed.push({ ...c, x: 0, y: 0 });
+            return;
+          }
+          const angleStep = (Math.PI * 2) / 48;
+          let x = 0;
+          let y = 0;
+          let found = false;
+          for (let ring = 1; ring < 500 && !found; ring++) {
+            const dist = ring * 3;
+            for (let a = 0; a < Math.PI * 2 && !found; a += angleStep) {
+              const px = Math.cos(a) * dist;
+              const py = Math.sin(a) * dist;
+              const overlaps = placed.some((p) => Math.hypot(p.x - px, p.y - py) < p.r + c.r - 1);
+              if (!overlaps) {
+                x = px;
+                y = py;
+                found = true;
+              }
+            }
+          }
+          placed.push({ ...c, x, y });
+        });
+        return placed;
+      }
+
+      function fitLabel(name, r, fontSize) {
+        const maxChars = Math.max(3, Math.floor((r * 1.7) / (fontSize * 0.56)));
+        return name.length > maxChars ? `${name.slice(0, maxChars - 1)}…` : name;
+      }
+
+      // Draws each startup as a circle whose area is proportional to its
+      // return multiple, so one dominant circle among many tiny ones makes
+      // the power-law point visible at a glance instead of a scanned list.
+      function renderBubbleChart(multiples) {
+        const RADIUS_MIN = 9;
+        const RADIUS_MAX = 150;
+        const maxMultiple = Math.max(...multiples);
+        const k = RADIUS_MAX / Math.sqrt(maxMultiple || 1);
+
+        const circles = multiples.map((multiple, i) => ({
+          name: STARTUP_NAMES[i],
+          multiple,
+          r: Math.max(RADIUS_MIN, k * Math.sqrt(multiple)),
+        }));
+
+        const packed = packCircles(circles);
+        const pad = 24;
+        const minX = Math.min(...packed.map((p) => p.x - p.r));
+        const maxX = Math.max(...packed.map((p) => p.x + p.r));
+        const minY = Math.min(...packed.map((p) => p.y - p.r));
+        const maxY = Math.max(...packed.map((p) => p.y + p.r));
+
+        const svgNS = "http://www.w3.org/2000/svg";
+        bubbleChart.innerHTML = "";
+        const svg = document.createElementNS(svgNS, "svg");
+        svg.setAttribute(
+          "viewBox",
+          `${minX - pad} ${minY - pad} ${maxX - minX + pad * 2} ${maxY - minY + pad * 2}`,
+        );
+        svg.setAttribute("role", "img");
+        svg.setAttribute(
+          "aria-label",
+          "Circle-packing chart: each circle's area is the startup's return multiple, and the biggest circle dominates the fund's return.",
+        );
+
+        packed.forEach((c) => {
+          const isOutlier = c.multiple === maxMultiple;
+          const g = document.createElementNS(svgNS, "g");
+          g.setAttribute("class", isOutlier ? "bubble bubble-outlier" : "bubble");
+
+          const circle = document.createElementNS(svgNS, "circle");
+          circle.setAttribute("cx", String(c.x));
+          circle.setAttribute("cy", String(c.y));
+          circle.setAttribute("r", String(c.r));
+          g.appendChild(circle);
+
+          const title = document.createElementNS(svgNS, "title");
+          title.textContent = `${c.name}: ${c.multiple.toFixed(2)}x`;
+          g.appendChild(title);
+
+          if (c.r >= 40) {
+            const fontSize = Math.max(9, Math.min(22, c.r * 0.28));
+            const nameText = document.createElementNS(svgNS, "text");
+            nameText.setAttribute("x", String(c.x));
+            nameText.setAttribute("y", String(c.y - fontSize * 0.35));
+            nameText.setAttribute("class", "bubble-label-name");
+            nameText.setAttribute("font-size", String(fontSize));
+            nameText.textContent = fitLabel(c.name, c.r, fontSize);
+            g.appendChild(nameText);
+
+            const multipleText = document.createElementNS(svgNS, "text");
+            multipleText.setAttribute("x", String(c.x));
+            multipleText.setAttribute("y", String(c.y + fontSize * 0.9));
+            multipleText.setAttribute("class", "bubble-label-multiple");
+            multipleText.setAttribute("font-size", String(fontSize * 0.85));
+            multipleText.textContent = `${c.multiple.toFixed(2)}x`;
+            g.appendChild(multipleText);
+          } else if (c.r >= 16) {
+            const fontSize = Math.max(8, Math.min(14, c.r * 0.5));
+            const multipleText = document.createElementNS(svgNS, "text");
+            multipleText.setAttribute("x", String(c.x));
+            multipleText.setAttribute("y", String(c.y + fontSize * 0.32));
+            multipleText.setAttribute("class", "bubble-label-multiple");
+            multipleText.setAttribute("font-size", String(fontSize));
+            multipleText.textContent = `${c.multiple.toFixed(1)}x`;
+            g.appendChild(multipleText);
+          }
+
+          svg.appendChild(g);
+        });
+
+        bubbleChart.appendChild(svg);
       }
 
       function setAllocation(index, rawValue) {
@@ -589,27 +722,18 @@ const STRATEGY_EXAMPLE = [
         cards.forEach((card, i) => {
           cardReturns[i].textContent = `Returned ${multiples[i].toFixed(2)}x`;
           const isOutlier = i === outlierIndex;
-          // Force a reflow so the reveal animation replays even when the same
+          const header = card.querySelector(".card-header");
+          // Force a reflow so the pulse animation replays even when the same
           // card wins two draws in a row.
-          card.classList.remove("startup-card-outlier");
-          void card.offsetWidth;
+          header.classList.remove("card-header-pulse");
+          void header.offsetWidth;
           card.classList.toggle("startup-card-outlier", isOutlier);
-          card.querySelector(".card-header").classList.toggle("card-header-dimmed", !isOutlier);
+          header.classList.toggle("card-header-dimmed", !isOutlier);
+          header.classList.toggle("card-header-pulse", isOutlier);
           card.style.setProperty("--card-accent", isOutlier ? "var(--outlier-accent)" : "var(--border)");
         });
 
-        const ranked = multiples
-          .map((multiple, i) => ({ multiple, name: STARTUP_NAMES[i] }))
-          .sort((a, b) => b.multiple - a.multiple);
-
-        breakdownList.innerHTML = "";
-        ranked.forEach((entry, rank) => {
-          const item = document.createElement("li");
-          item.className = "breakdown-item";
-          if (rank === 0) item.classList.add("breakdown-item-outlier");
-          item.innerHTML = `<span class="breakdown-name">${entry.name}</span><span class="breakdown-multiple">${entry.multiple.toFixed(2)}x</span>`;
-          breakdownList.appendChild(item);
-        });
+        renderBubbleChart(multiples);
 
         // Swaps the illustrative "one outlier carries the fund" chart for the
         // visitor's own result, since a live number makes the point better

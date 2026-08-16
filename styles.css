@@ -151,14 +151,18 @@ h1 {
 .card-header {
   position: relative;
   aspect-ratio: 2 / 1;
-  filter: saturate(1) grayscale(0);
-  transition: filter 0.4s ease-out;
+  overflow: hidden;
+  filter: saturate(var(--art-saturate, 1));
+  transition: filter 0.2s ease-out;
 }
 
 .card-header svg {
   display: block;
   width: 100%;
   height: 100%;
+  transform: scale(var(--art-scale, 1));
+  transform-origin: 50% 50%;
+  transition: transform 0.2s ease-out;
 }
 
 .card-header::after {
@@ -177,21 +181,22 @@ h1 {
   background: rgb(246 244 239 / 70%);
 }
 
-@keyframes outlier-reveal {
+@keyframes header-pulse {
   0% {
-    transform: scale(1);
-    box-shadow: 0 0 0 0 var(--card-accent, var(--accent));
+    transform: scale(var(--art-scale, 1));
   }
 
-  40% {
-    transform: scale(1.04);
-    box-shadow: 0 0 0 0.6rem var(--card-accent, var(--accent));
+  45% {
+    transform: scale(calc(var(--art-scale, 1) + 0.22));
   }
 
   100% {
-    transform: scale(1);
-    box-shadow: 0 0 0 0.25rem var(--card-accent, var(--accent));
+    transform: scale(var(--art-scale, 1));
   }
+}
+
+.card-header-pulse svg {
+  animation: header-pulse 0.55s ease-out;
 }
 
 .card-body {
@@ -221,9 +226,23 @@ h1 {
   color: var(--card-accent, var(--accent));
 }
 
+@keyframes outlier-ring {
+  0% {
+    box-shadow: 0 0 0 0 var(--card-accent, var(--accent));
+  }
+
+  40% {
+    box-shadow: 0 0 0 0.6rem var(--card-accent, var(--accent));
+  }
+
+  100% {
+    box-shadow: 0 0 0 0.25rem var(--card-accent, var(--accent));
+  }
+}
+
 .startup-card-outlier {
   box-shadow: 0 0 0 0.25rem var(--card-accent, var(--accent));
-  animation: outlier-reveal 0.55s ease-out;
+  animation: outlier-ring 0.55s ease-out;
 }
 
 .startup-card-outlier .card-return::after {
@@ -382,7 +401,7 @@ h1 {
 
 .breakdown {
   margin-top: 3rem;
-  max-width: 40rem;
+  max-width: 60rem;
 }
 
 .breakdown h2 {
@@ -395,28 +414,48 @@ h1 {
   margin: 0 0 1rem;
 }
 
-.breakdown-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  border-top: 1px solid var(--border);
+.bubble-chart {
+  width: 100%;
+  aspect-ratio: 16 / 9;
 }
 
-.breakdown-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 0.6rem 0;
-  border-bottom: 1px solid var(--border);
-  font-size: 1.05rem;
+.bubble-chart svg {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
-.breakdown-item-outlier {
+.bubble circle {
+  fill: var(--track);
+  stroke: var(--border);
+  stroke-width: 1;
+  transition: fill 0.2s ease-out;
+}
+
+.bubble-outlier circle {
+  fill: var(--outlier-accent);
+  stroke: var(--outlier-accent);
+}
+
+.bubble-label-name,
+.bubble-label-multiple {
+  text-anchor: middle;
+  dominant-baseline: middle;
+  fill: var(--text);
+  font-family: inherit;
+  pointer-events: none;
+}
+
+.bubble-outlier .bubble-label-name,
+.bubble-outlier .bubble-label-multiple {
+  fill: #fff;
   font-weight: 700;
-  color: var(--accent);
 }
 
-.breakdown-multiple {
-  font-variant-numeric: tabular-nums;
+@media (width <= 600px) {
+  .bubble-chart {
+    aspect-ratio: 4 / 5;
+  }
 }
 
 .info-panel {
