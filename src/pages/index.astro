@@ -475,6 +475,16 @@ const STRATEGY_EXAMPLE = [
       const feeInfoBackdrop = document.getElementById("fee-info-backdrop");
       const feeInfoClose = document.getElementById("fee-info-close");
 
+      // A very short fill sits almost entirely inside its own rounded top
+      // corners, which tapers it to a point and makes it read as narrower
+      // than a tall fill even though the track underneath is exactly the
+      // same width. Cap the radius to half the fill's actual rendered pixel
+      // height so short bars stay a flat-topped rectangle instead.
+      function applyFillRadius(fill) {
+        const radius = Math.min(6.4, fill.getBoundingClientRect().height / 2);
+        fill.style.borderRadius = `${radius}px ${radius}px 0 0`;
+      }
+
       const breakdownFootnoteLink = document.getElementById("breakdown-footnote-link");
       const infoPanel = document.getElementById("info-panel");
       breakdownFootnoteLink.addEventListener("click", () => {
@@ -491,6 +501,8 @@ const STRATEGY_EXAMPLE = [
       const strategyValueTexts = strategyValues.map((el) => el.textContent);
       const strategyLabel2InitialText = strategyLabel2.textContent;
       const strategyCaptionInitialText = strategyCaption.textContent;
+
+      document.querySelectorAll(".bar-chart-fill").forEach(applyFillRadius);
 
       let allocations = sliders.map((slider) => Number(slider.value));
 
@@ -1109,9 +1121,11 @@ const STRATEGY_EXAMPLE = [
         resetCardColors();
         render();
         contributionChart.innerHTML = contributionChartInitialHTML;
+        contributionChart.querySelectorAll(".bar-chart-fill").forEach(applyFillRadius);
         contributionCaption.textContent = contributionCaptionInitialText;
         strategyFills.forEach((fill, i) => {
           fill.style.height = strategyFillHeights[i];
+          applyFillRadius(fill);
         });
         strategyValues.forEach((el, i) => {
           el.textContent = strategyValueTexts[i];
@@ -1408,6 +1422,7 @@ const STRATEGY_EXAMPLE = [
           item.className = "bar-chart-item";
           item.innerHTML = `<div class="bar-chart-track"><div class="bar-chart-fill" style="height:${share}%;"></div></div>`;
           contributionChart.appendChild(item);
+          applyFillRadius(item.querySelector(".bar-chart-fill"));
         });
         contributionCaption.textContent = "Share of your fund's actual return, by startup rank";
 
@@ -1418,6 +1433,7 @@ const STRATEGY_EXAMPLE = [
         const scale = Math.max(1.5, ...strategyResults);
         strategyFills.forEach((fill, i) => {
           fill.style.height = `${(strategyResults[i] / scale) * 100}%`;
+          applyFillRadius(fill);
         });
         strategyValues.forEach((el, i) => {
           el.textContent = `${strategyResults[i].toFixed(2)}x`;
@@ -1452,6 +1468,7 @@ const STRATEGY_EXAMPLE = [
         const buckets = tailBuckets(t);
         tailFills.forEach((fill, i) => {
           fill.style.height = `${buckets[i]}%`;
+          applyFillRadius(fill);
         });
         tailValues.forEach((el, i) => {
           el.textContent = `${Math.round(buckets[i])}%`;
