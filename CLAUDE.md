@@ -200,7 +200,7 @@ Do not add:
 Before presenting any calculated or derived number as correct, verify what it actually represents against its real-world meaning, not just that a chart or figure changed visually. This session had two bugs that looked fine on screen but were wrong underneath: a comparison scenario pinned to a fixed array index rather than the value it claimed to represent, and a chart bucket hardcoded to never change while the others did. When adding or changing any calculation, trace through what it should mean, not just whether the UI updates.
 
 ## Scope discipline
-Only implement what's explicitly asked. Don't add navigation elements, UI affordances, animations, or styling flourishes beyond the specific request, even if they seem like reasonable defaults. If something seems missing or worth adding, ask first rather than adding it.
+Only implement what's explicitly asked. Don't add navigation elements, UI affordances, or styling flourishes beyond the specific request, even if they seem like reasonable defaults. Animation is a standing exception, see the Animation rule below. If something seems missing or worth adding, ask first rather than adding it.
 
 ## Check in with me
 - Before making any non-trivial decision (data source choice, distribution parameters, visual layout direction, scope cuts), stop and check with me rather than assuming and proceeding.
