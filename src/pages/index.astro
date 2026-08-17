@@ -6,6 +6,23 @@ const FUND_TOTAL = 10_000_000;
 const STARTUP_COUNT = 15;
 const STEP = 250_000;
 
+// Trims a decimal to at most 2 places, dropping trailing zeros (1.50 -> "1.5", 1.00 -> "1").
+function trimDecimal(n: number) {
+  return Number(n.toFixed(2)).toString();
+}
+
+// $1,000,000+ as "$1M"/"$1.25M", $1,000-$1,000,000 as "$250k"/"$12.5k", else plain dollars.
+function formatMoney(n: number) {
+  const abs = Math.abs(n);
+  if (abs >= 1_000_000) {
+    return `$${trimDecimal(n / 1_000_000)}m`;
+  }
+  if (abs >= 1_000) {
+    return `$${trimDecimal(n / 1_000)}k`;
+  }
+  return `$${Math.round(n).toLocaleString("en-AU")}`;
+}
+
 const STARTUP_INFO = [
   { name: "Orbital Analytics", description: "Satellite imagery for crop insurers" },
   { name: "Loopwave", description: "Recycled battery chemistry for EVs" },
@@ -122,8 +139,8 @@ const STRATEGY_EXAMPLE = [
         a fixed pool of money across {STARTUP_COUNT} startups, then see what comes back.
       </p>
       <p class="framing">
-        This fund raised ${RAISED_TOTAL.toLocaleString("en-AU")}. Fees take about 20% over its
-        life. That leaves <strong data-testid="fund-total">${FUND_TOTAL.toLocaleString("en-AU")}</strong> to
+        This fund raised {formatMoney(RAISED_TOTAL)}. Fees take about 20% over its
+        life. That leaves <strong data-testid="fund-total">{formatMoney(FUND_TOTAL)}</strong> to
         invest in {STARTUP_COUNT} startups. However you split it, one outlier (a single
         startup that returns far more than the rest) decides almost all of your return.
         <button type="button" class="info-toggle" id="fee-info-toggle" aria-expanded="false" aria-controls="fee-info">
@@ -136,7 +153,7 @@ const STRATEGY_EXAMPLE = [
         <p>
           Funds typically charge a management fee of roughly 2% each year, charged across roughly ten
           years, to cover salaries and other running costs. That works out to about 20% of the
-          ${RAISED_TOTAL.toLocaleString("en-AU")} raised, leaving roughly ${FUND_TOTAL.toLocaleString("en-AU")} to
+          {formatMoney(RAISED_TOTAL)} raised, leaving roughly {formatMoney(FUND_TOTAL)} to
           actually invest in startups.
         </p>
       </div>
@@ -146,17 +163,17 @@ const STRATEGY_EXAMPLE = [
           <div class="sticky-toolbar">
             <div class="remaining-bar">
               <p data-testid="fund-remaining" aria-live="polite" class="remaining-number">
-                Remaining: ${FUND_TOTAL.toLocaleString("en-AU")}
+                Remaining: {formatMoney(FUND_TOTAL)}
               </p>
               <p class="allocation-prompt" aria-live="polite">
-                Invest the full ${FUND_TOTAL.toLocaleString("en-AU")} to continue.
+                Invest the full {formatMoney(FUND_TOTAL)} to continue.
               </p>
             </div>
           </div>
           <div class="grid-controls">
             <button type="button" id="reset-button" class="randomise-button">Reset</button>
             <button type="button" id="randomise-button" class="randomise-button">
-              Randomise: invest all ${FUND_TOTAL.toLocaleString("en-AU")}
+              Randomise: invest all {formatMoney(FUND_TOTAL)}
             </button>
           </div>
           <ul class="startup-grid">
@@ -184,7 +201,7 @@ const STRATEGY_EXAMPLE = [
                       &minus;
                     </button>
                     <output for={`slider-${startup.id}`} id={`value-${startup.id}`}>
-                      ${startup.initial.toLocaleString("en-AU")}
+                      {formatMoney(startup.initial)}
                     </output>
                     <button
                       type="button"
@@ -465,7 +482,13 @@ const STRATEGY_EXAMPLE = [
 
       let allocations = sliders.map((slider) => Number(slider.value));
 
-      const currency = (n) => `$${Math.round(n).toLocaleString("en-AU")}`;
+      const trimDecimal = (n) => Number(n.toFixed(2)).toString();
+      const currency = (n) => {
+        const abs = Math.abs(n);
+        if (abs >= 1_000_000) return `$${trimDecimal(n / 1_000_000)}m`;
+        if (abs >= 1_000) return `$${trimDecimal(n / 1_000)}k`;
+        return `$${Math.round(n).toLocaleString("en-AU")}`;
+      };
 
       function remaining() {
         return FUND_TOTAL - allocations.reduce((sum, v) => sum + v, 0);
@@ -516,9 +539,16 @@ const STRATEGY_EXAMPLE = [
         const fullyAllocated = left === 0;
         remainingEl.classList.toggle("remaining-active", !fullyAllocated);
         submitButton.disabled = !fullyAllocated;
-        promptEl.textContent = fullyAllocated
-          ? ""
+        const promptText = fullyAllocated
+          ? "You've invested all your capital."
           : `Invest the full ${currency(FUND_TOTAL)} to continue.`;
+        if (promptText !== promptEl.textContent) {
+          promptEl.textContent = promptText;
+          promptEl.classList.remove("allocation-prompt-animate");
+          void promptEl.offsetWidth;
+          promptEl.classList.add("allocation-prompt-animate");
+        }
+        promptEl.classList.toggle("allocation-prompt-ready", fullyAllocated);
       }
 
       // Gives each card back its own colour and clears the last draw's result,

@@ -108,6 +108,32 @@ h1 {
   font-weight: 600;
 }
 
+.allocation-prompt.allocation-prompt-ready {
+  color: var(--outlier-accent);
+}
+
+@keyframes allocation-prompt-fade {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.allocation-prompt.allocation-prompt-animate {
+  animation: allocation-prompt-fade 0.18s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .allocation-prompt.allocation-prompt-animate {
+    animation: none;
+  }
+}
+
 .startup-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr));
