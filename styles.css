@@ -737,7 +737,13 @@ h1 {
   height: 15rem;
 }
 
+/* Unlike the other bar charts, this one's items are a bare track with no
+   label/value siblings, so it needs its own single-row template rather
+   than the shared 1fr/auto/auto one --- otherwise column-flow placement
+   fills the label/value rows meant for other charts and only every third
+   bar lands in the row that actually gets height. */
 .bar-chart-tight {
+  grid-template-rows: 1fr;
   gap: 0.4rem 0.5rem;
   height: 10rem;
 }
