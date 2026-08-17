@@ -243,16 +243,12 @@ const STRATEGY_EXAMPLE = [
       </section>
 
       <section class="breakdown" id="breakdown" hidden>
-        <h2>Startup returns, ranked<sup>1</sup></h2>
+        <h2>Startup returns, ranked<sup class="footnote-marker"><a class="footnote-marker-link" href="#breakdown-footnote" id="breakdown-footnote-link">1</a></sup></h2>
         <p class="breakdown-caption">
           This is the same draw as above, one circle per startup, sized by how much it returned.
           The biggest circle is the one that actually made your fund's money.
         </p>
         <div class="bubble-chart" id="bubble-chart"></div>
-        <p class="breakdown-footnote">
-          <sup class="footnote-marker">1</sup> Shows all 15 startups' returns from this draw, not
-          just the ones you invested in, so you can see where the outlier actually landed.
-        </p>
       </section>
 
       <section class="explainer" id="explainer">
@@ -414,7 +410,7 @@ const STRATEGY_EXAMPLE = [
     </p>
 
     <footer>
-      <details class="info-panel">
+      <details class="info-panel" id="info-panel">
         <summary>About the data used in this simulator</summary>
         <p>
           Returns in the simulator above are a modelled Pareto approximation (a mathematical
@@ -433,6 +429,10 @@ const STRATEGY_EXAMPLE = [
           examples built to show that same shape, not measurements of this run, except the "One
           outlier carries the fund" chart, which switches to your own result once you invest.
           Startup names, descriptions and artwork are fictional, for illustration only.
+        </p>
+        <p id="breakdown-footnote">
+          <sup>1</sup> "Startup returns, ranked" shows all 15 startups' returns from this draw, not
+          just the ones you invested in, so you can see where the outlier actually landed.
         </p>
       </details>
     </footer>
@@ -472,6 +472,12 @@ const STRATEGY_EXAMPLE = [
       const feeInfo = document.getElementById("fee-info");
       const feeInfoBackdrop = document.getElementById("fee-info-backdrop");
       const feeInfoClose = document.getElementById("fee-info-close");
+
+      const breakdownFootnoteLink = document.getElementById("breakdown-footnote-link");
+      const infoPanel = document.getElementById("info-panel");
+      breakdownFootnoteLink.addEventListener("click", () => {
+        infoPanel.open = true;
+      });
 
       // Snapshot of the illustrative "one outlier carries the fund" and
       // "diversifying does not change this" diagrams before any submission,

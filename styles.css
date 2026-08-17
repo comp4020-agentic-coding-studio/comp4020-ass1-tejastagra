@@ -557,27 +557,31 @@ h1 {
   margin-bottom: 0.4rem;
 }
 
-.breakdown h2 sup {
+.breakdown h2 .footnote-marker {
   font-size: 0.9rem;
-  color: var(--muted);
+}
+
+.footnote-marker-link {
+  color: var(--accent);
+  text-decoration: underline;
+  transition: color 0.15s ease;
+}
+
+.footnote-marker-link:hover,
+.footnote-marker-link:focus-visible {
+  color: var(--outlier-accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .footnote-marker-link {
+    transition: none;
+  }
 }
 
 .breakdown-caption {
   color: var(--muted);
   margin: 0 0 1rem;
   max-width: 60rem;
-}
-
-.breakdown-footnote {
-  color: var(--muted);
-  font-size: 0.85rem;
-  line-height: 1.5;
-  margin: 1rem 0 0;
-  max-width: 60rem;
-}
-
-.breakdown-footnote .footnote-marker {
-  margin-right: 0.15rem;
 }
 
 .bubble-chart {
