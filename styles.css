@@ -557,10 +557,27 @@ h1 {
   margin-bottom: 0.4rem;
 }
 
+.breakdown h2 sup {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
 .breakdown-caption {
   color: var(--muted);
   margin: 0 0 1rem;
   max-width: 60rem;
+}
+
+.breakdown-footnote {
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  margin: 1rem 0 0;
+  max-width: 60rem;
+}
+
+.breakdown-footnote .footnote-marker {
+  margin-right: 0.15rem;
 }
 
 .bubble-chart {
