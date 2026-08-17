@@ -4,7 +4,7 @@ import "../../styles.css";
 const RAISED_TOTAL = 12_500_000;
 const FUND_TOTAL = 10_000_000;
 const STARTUP_COUNT = 15;
-const STEP = 100_000;
+const STEP = 250_000;
 
 const STARTUP_INFO = [
   { name: "Orbital Analytics", description: "Satellite imagery for crop insurers" },
@@ -130,7 +130,9 @@ const STRATEGY_EXAMPLE = [
           Why only 80%?
         </button>
       </p>
+      <div id="fee-info-backdrop" class="fee-info-backdrop"></div>
       <div id="fee-info" class="fee-info">
+        <button type="button" class="fee-info-close" id="fee-info-close" aria-label="Close">✕</button>
         <p>
           Funds typically charge a management fee of roughly 2% each year, charged across roughly ten
           years, to cover salaries and other running costs. That works out to about 20% of the
@@ -447,6 +449,8 @@ const STRATEGY_EXAMPLE = [
       const randomiseButton = document.getElementById("randomise-button");
       const feeToggle = document.getElementById("fee-info-toggle");
       const feeInfo = document.getElementById("fee-info");
+      const feeInfoBackdrop = document.getElementById("fee-info-backdrop");
+      const feeInfoClose = document.getElementById("fee-info-close");
 
       // Snapshot of the illustrative "one outlier carries the fund" and
       // "diversifying does not change this" diagrams before any submission,
@@ -1087,7 +1091,7 @@ const STRATEGY_EXAMPLE = [
       });
 
       randomiseButton.addEventListener("click", () => {
-        // Randomise in whole $100k units, the same step the +/- buttons use,
+        // Randomise in whole $250k units, the same step the +/- buttons use,
         // so every random split lands on the same increments a visitor could
         // reach by hand.
         const totalUnits = FUND_TOTAL / STEP;
@@ -1103,6 +1107,9 @@ const STRATEGY_EXAMPLE = [
       function positionFeeInfo() {
         const margin = 12;
         const toggleRect = feeToggle.getBoundingClientRect();
+        // Cap the box's own width to the viewport first, so a narrow viewport can
+        // never leave it too wide to fit regardless of where it's positioned.
+        feeInfo.style.maxWidth = `${window.innerWidth - margin * 2}px`;
         const infoRect = feeInfo.getBoundingClientRect();
         let left = toggleRect.left;
         left = Math.min(left, window.innerWidth - infoRect.width - margin);
@@ -1117,58 +1124,109 @@ const STRATEGY_EXAMPLE = [
 
       function openFeeInfo() {
         feeToggle.setAttribute("aria-expanded", "true");
-        positionFeeInfo();
+        if (feeInfo.classList.contains("fee-info-modal")) {
+          feeInfoBackdrop.classList.add("fee-info-backdrop-open");
+        } else {
+          positionFeeInfo();
+        }
         feeInfo.classList.add("fee-info-open");
       }
 
       function closeFeeInfo() {
         feeToggle.setAttribute("aria-expanded", "false");
         feeInfo.classList.remove("fee-info-open");
+        feeInfoBackdrop.classList.remove("fee-info-backdrop-open");
       }
 
-      const supportsHoverPopover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+      // Some emulation modes (e.g. Chrome's "Responsive" viewport without a device
+      // preset) report a fine hover pointer even at phone-sized widths, so a narrow
+      // viewport forces the mobile/modal path regardless of what the media query says.
+      const MOBILE_MAX_WIDTH = 480;
+      let feePopoverController = null;
 
-      if (supportsHoverPopover) {
-        let hoverCloseTimer = null;
-        const cancelHoverClose = () => {
-          if (hoverCloseTimer) {
-            clearTimeout(hoverCloseTimer);
-            hoverCloseTimer = null;
-          }
-        };
-        const scheduleHoverClose = () => {
-          cancelHoverClose();
-          hoverCloseTimer = setTimeout(closeFeeInfo, 100);
-        };
-        const showOnHover = () => {
-          cancelHoverClose();
-          openFeeInfo();
-        };
+      // Re-derives which mode the popover should be in and re-wires its listeners
+      // accordingly. Called once at load and again on every resize/orientation
+      // change, so rotating a device or resizing a window without a reload still
+      // ends up with the correct mode instead of whatever was decided at load.
+      function applyFeePopoverMode() {
+        const supportsHoverPopover =
+          window.matchMedia("(hover: hover) and (pointer: fine)").matches &&
+          window.innerWidth > MOBILE_MAX_WIDTH;
 
-        feeToggle.addEventListener("mouseenter", showOnHover);
-        feeToggle.addEventListener("mouseleave", scheduleHoverClose);
-        feeToggle.addEventListener("focus", showOnHover);
-        feeToggle.addEventListener("blur", scheduleHoverClose);
-        feeInfo.addEventListener("mouseenter", cancelHoverClose);
-        feeInfo.addEventListener("mouseleave", scheduleHoverClose);
-      } else {
-        const onOutsideFeeInfoClick = (event) => {
-          if (feeInfo.contains(event.target) || feeToggle.contains(event.target)) return;
-          closeFeeInfo();
-          document.removeEventListener("click", onOutsideFeeInfoClick);
-        };
+        closeFeeInfo();
+        if (feePopoverController) {
+          feePopoverController.abort();
+        }
+        feePopoverController = new AbortController();
+        const { signal } = feePopoverController;
 
-        feeToggle.addEventListener("click", () => {
-          const expanded = feeToggle.getAttribute("aria-expanded") === "true";
-          if (expanded) {
+        // On touch/no-hover devices there's no anchor point to point a popover at
+        // reliably, so it shows as a centred modal with a backdrop and a close
+        // button instead of the hover-capable anchored popover.
+        feeInfo.classList.toggle("fee-info-modal", !supportsHoverPopover);
+
+        if (supportsHoverPopover) {
+          let hoverCloseTimer = null;
+          const cancelHoverClose = () => {
+            if (hoverCloseTimer) {
+              clearTimeout(hoverCloseTimer);
+              hoverCloseTimer = null;
+            }
+          };
+          const scheduleHoverClose = () => {
+            cancelHoverClose();
+            hoverCloseTimer = setTimeout(closeFeeInfo, 100);
+          };
+          const showOnHover = () => {
+            cancelHoverClose();
+            openFeeInfo();
+          };
+
+          feeToggle.addEventListener("mouseenter", showOnHover, { signal });
+          feeToggle.addEventListener("mouseleave", scheduleHoverClose, { signal });
+          feeToggle.addEventListener("focus", showOnHover, { signal });
+          feeToggle.addEventListener("blur", scheduleHoverClose, { signal });
+          feeInfo.addEventListener("mouseenter", cancelHoverClose, { signal });
+          feeInfo.addEventListener("mouseleave", scheduleHoverClose, { signal });
+        } else {
+          const onOutsideFeeInfoClick = (event) => {
+            if (feeInfo.contains(event.target) || feeToggle.contains(event.target)) return;
             closeFeeInfo();
             document.removeEventListener("click", onOutsideFeeInfoClick);
-            return;
-          }
-          openFeeInfo();
-          document.addEventListener("click", onOutsideFeeInfoClick);
-        });
+          };
+
+          feeToggle.addEventListener(
+            "click",
+            () => {
+              const expanded = feeToggle.getAttribute("aria-expanded") === "true";
+              if (expanded) {
+                closeFeeInfo();
+                document.removeEventListener("click", onOutsideFeeInfoClick);
+                return;
+              }
+              openFeeInfo();
+              document.addEventListener("click", onOutsideFeeInfoClick);
+            },
+            { signal },
+          );
+
+          feeInfoClose.addEventListener("click", () => {
+            closeFeeInfo();
+            document.removeEventListener("click", onOutsideFeeInfoClick);
+          }, { signal });
+
+          signal.addEventListener("abort", () => document.removeEventListener("click", onOutsideFeeInfoClick));
+        }
       }
+
+      applyFeePopoverMode();
+
+      let feePopoverResizeTimer = null;
+      window.addEventListener("resize", () => {
+        clearTimeout(feePopoverResizeTimer);
+        feePopoverResizeTimer = setTimeout(applyFeePopoverMode, 150);
+      });
+      window.addEventListener("orientationchange", applyFeePopoverMode);
 
       // Appears once near the bottom of the page rather than on load, and
       // stays dismissed for the rest of the tab's session once closed.

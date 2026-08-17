@@ -357,7 +357,8 @@ h1 {
 .fee-info {
   position: fixed;
   z-index: 20;
-  width: min(30rem, calc(100vw - 2rem));
+  box-sizing: border-box;
+  width: min(30rem, calc(100vw - 1.5rem));
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 0.5rem;
@@ -395,6 +396,74 @@ h1 {
 
 .fee-info p {
   margin: 0;
+}
+
+.fee-info-close {
+  display: none;
+}
+
+.fee-info-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 19;
+  background: rgb(0 0 0 / 45%);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 0.18s ease-out,
+    visibility 0s linear 0.18s;
+}
+
+.fee-info-backdrop.fee-info-backdrop-open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition: opacity 0.18s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fee-info-backdrop {
+    transition: visibility 0s linear 0s;
+  }
+}
+
+.fee-info.fee-info-modal {
+  top: 50%;
+  left: 50%;
+  z-index: 21;
+  padding-top: 2.75rem;
+  max-height: calc(100vh - 1.5rem);
+  overflow-y: auto;
+  transform: translate(-50%, -50%) scale(0.96);
+}
+
+.fee-info.fee-info-modal.fee-info-open {
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.fee-info-modal .fee-info-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: none;
+  color: var(--muted);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.fee-info-modal .fee-info-close:hover,
+.fee-info-modal .fee-info-close:focus-visible {
+  background: rgb(11 95 255 / 10%);
+  color: var(--accent);
 }
 
 .allocate-button {
