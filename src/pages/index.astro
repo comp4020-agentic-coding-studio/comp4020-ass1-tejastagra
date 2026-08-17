@@ -461,6 +461,7 @@ const STRATEGY_EXAMPLE = [
       const bubbleChart = document.getElementById("bubble-chart");
       const breakdownSection = document.getElementById("breakdown");
       let bubbleChartState = null;
+      let lastBubbleMultiples = null;
       const contributionChart = document.getElementById("contribution-chart");
       const contributionCaption = document.getElementById("contribution-chart-caption");
       const strategyFills = Array.from(document.querySelectorAll("[data-strategy]"));
@@ -577,6 +578,7 @@ const STRATEGY_EXAMPLE = [
         bubbleChart.innerHTML = "";
         breakdownSection.hidden = true;
         bubbleChartState = null;
+        lastBubbleMultiples = null;
         dragCtx = null;
         returnEl.textContent = "";
         compareEl.textContent = "";
@@ -1269,6 +1271,17 @@ const STRATEGY_EXAMPLE = [
       });
       window.addEventListener("orientationchange", applyFeePopoverMode);
 
+      // The chart packs circles for the width it was drawn at, so a viewport
+      // resize (eg rotating, or resizing the window without a reload) leaves
+      // it stale and overlapping until it's redrawn at the new width.
+      let bubbleResizeTimer = null;
+      window.addEventListener("resize", () => {
+        clearTimeout(bubbleResizeTimer);
+        bubbleResizeTimer = setTimeout(() => {
+          if (lastBubbleMultiples) renderBubbleChart(lastBubbleMultiples);
+        }, 150);
+      });
+
       // Appears once near the bottom of the page rather than on load, and
       // stays dismissed for the rest of the tab's session once closed.
       const authorPanel = document.getElementById("author-panel");
@@ -1376,6 +1389,7 @@ const STRATEGY_EXAMPLE = [
         });
 
         breakdownSection.hidden = false;
+        lastBubbleMultiples = multiples;
         renderBubbleChart(multiples);
 
         // Swaps the illustrative "one outlier carries the fund" chart for the

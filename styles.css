@@ -339,6 +339,7 @@ h1 {
   color: var(--text);
   font-size: 0.9rem;
   font-weight: 600;
+  text-align: left;
   padding: 0.5rem 1.1rem;
   cursor: pointer;
 }
@@ -741,6 +742,7 @@ h1 {
 
 .bar-chart-item {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -770,6 +772,7 @@ h1 {
   font-size: 0.85rem;
   color: var(--muted);
   text-align: center;
+  overflow-wrap: break-word;
 }
 
 .bar-chart-value {
